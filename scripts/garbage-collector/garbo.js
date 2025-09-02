@@ -30655,7 +30655,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia100.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("03d66618c41a4c983ef095ff119203ba76c9d377", ")"));
+      (0, import_kolmafia100.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("f07cd8e015f2eed000543fa2952a505333c6957a", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia100.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -34302,7 +34302,7 @@ var experienceFamiliars = [{
 }, {
   familiar: $familiar(_templateObject4136 || (_templateObject4136 = _taggedTemplateLiteral97(["Cooler Yeti"]))),
   used: function() {
-    return globalOptions.ascend && (0, import_kolmafia110.myInebriety)() >= (0, import_kolmafia110.inebrietyLimit)();
+    return globalOptions.ascend && (0, import_kolmafia110.myInebriety)() > (0, import_kolmafia110.inebrietyLimit)();
   },
   useValue: function() {
     return 40 * 5800;
