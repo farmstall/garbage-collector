@@ -30655,7 +30655,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia100.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("a4b1c5557a959ca3aa938c2afab57d215b086031", ")"));
+      (0, import_kolmafia100.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("fb685b68bd39aa44694105db69e124b015ea32ec", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia100.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -34301,10 +34301,10 @@ var experienceFamiliars = [{
 }, {
   familiar: $familiar(_templateObject4136 || (_templateObject4136 = _taggedTemplateLiteral97(["Cooler Yeti"]))),
   used: function() {
-    return globalOptions.ascend && (0, import_kolmafia110.myInebriety)() > (0, import_kolmafia110.inebrietyLimit)();
+    return (0, import_kolmafia110.myInebriety)() > (0, import_kolmafia110.inebrietyLimit)();
   },
   useValue: function() {
-    return 40 * 5800;
+    return 40 * get("valueOfAdventure");
   },
   // Gives us 40 adventures of overdrunk adventures
   baseExp: 0,
