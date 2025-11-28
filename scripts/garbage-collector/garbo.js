@@ -30884,7 +30884,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia101.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("9110a8ade2f032cabcd5923bfaacfc1f2d7974d2", ")"));
+      (0, import_kolmafia101.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("242f13af8ba239bd9af2c85727a473375001671b", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia101.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -51297,16 +51297,8 @@ function queryEggNetPriority() {
     return /* @__PURE__ */ new Map();
   }
 }
-function donateMonsterValue(m) {
-  var items = (0, import_kolmafia160.itemDropsArray)(m).filter(function(drop) {
-    return ["", "n"].includes(drop.type);
-  });
-  return (m.minMeat + m.maxMeat) / 2 + sum(items, function(drop) {
-    return drop.rate / 100 * garboValue(drop.drop);
-  });
-}
 function findDonateMonster(onlyFree) {
-  var _incomplete$get;
+  var _incomplete$get2;
   var incomplete = queryEggNetIncomplete();
   var priority = queryEggNetPriority();
   if (incomplete.size === 0) return void 0;
@@ -51317,14 +51309,14 @@ function findDonateMonster(onlyFree) {
     return (0, import_kolmafia160.getMonsters)(x);
   })), _toConsumableArray74($monsters.all().filter(function(x) {
     return x.attributes.includes("BOSS") || x.attributes.includes("NOCOPY") || onlyFree && !x.attributes.includes("FREE");
-  })), _toConsumableArray74($monsters(_templateObject2287 || (_templateObject2287 = _taggedTemplateLiteral149(["Source Agent"]))))));
+  })), _toConsumableArray74($monsters(_templateObject2287 || (_templateObject2287 = _taggedTemplateLiteral149(["Source Agent, invader bullet"]))))));
   var monster = CombatLoversLocket_exports.findMonster(function(m) {
     return m.id <= maxMonsterId && incomplete.has(m) && !banned2.has(m);
   }, function(m) {
-    var _priority$get;
-    return donateMonsterValue(m) + ((_priority$get = priority.get(m)) !== null && _priority$get !== void 0 ? _priority$get : 0) * 1e4;
+    var _incomplete$get, _priority$get;
+    return 100 - ((_incomplete$get = incomplete.get(m !== null && m !== void 0 ? m : import_kolmafia160.Monster.none)) !== null && _incomplete$get !== void 0 ? _incomplete$get : 0) + ((_priority$get = priority.get(m)) !== null && _priority$get !== void 0 ? _priority$get : 0) * 1e3 + Math.sin(((0, import_kolmafia160.toInt)((0, import_kolmafia160.myId)()) << 5) + (0, import_kolmafia160.myDaycount)() + m.id);
   });
-  var count = (_incomplete$get = incomplete.get(monster !== null && monster !== void 0 ? monster : import_kolmafia160.Monster.none)) !== null && _incomplete$get !== void 0 ? _incomplete$get : 0;
+  var count = (_incomplete$get2 = incomplete.get(monster !== null && monster !== void 0 ? monster : import_kolmafia160.Monster.none)) !== null && _incomplete$get2 !== void 0 ? _incomplete$get2 : 0;
   return !!monster && monster !== import_kolmafia160.Monster.none && count > 0 ? {
     monster: monster,
     count: count
