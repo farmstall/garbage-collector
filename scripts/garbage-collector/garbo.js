@@ -31033,7 +31033,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia102.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("3f21bd023cc9c39d5fee20438ff3d81a2300892d", ")"));
+      (0, import_kolmafia102.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("e51f7dab364ae28ea27ac976a0b026b78e85d1c9", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia102.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -32444,7 +32444,7 @@ function menu() {
     return have(item15);
   });
   var pilsners = $items(_templateObject8410 || (_templateObject8410 = _taggedTemplateLiteral91(["astral pilsner"]))).filter(function(item15) {
-    return have(item15);
+    return globalOptions.ascend && have(item15);
   });
   var instantKarma = globalOptions.usekarma ? $items(_templateObject856 || (_templateObject856 = _taggedTemplateLiteral91(["Instant Karma"]))).filter(function(item15) {
     return have(item15);
@@ -34701,7 +34701,8 @@ var experienceFamiliars = [{
 }, {
   familiar: $familiar(_templateObject4138 || (_templateObject4138 = _taggedTemplateLiteral99(["Cooler Yeti"]))),
   used: function() {
-    return $familiar(_templateObject5108 || (_templateObject5108 = _taggedTemplateLiteral99(["Cooler Yeti"]))).experience >= 400 || globalOptions.ascend || !globalOptions.prefs.chargeYeti;
+    return $familiar(_templateObject5108 || (_templateObject5108 = _taggedTemplateLiteral99(["Cooler Yeti"]))).experience >= 400 || // globalOptions.ascend ||
+    !globalOptions.prefs.chargeYeti;
   },
   // Vintage Smart Drink is 40 adventures
   useValue: getAverageAdventures($item(_templateObject6100 || (_templateObject6100 = _taggedTemplateLiteral99(["vintage smart drink"])))) * get("valueOfAdventure"),
