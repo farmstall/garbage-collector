@@ -26211,7 +26211,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia87.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("08569fcfc99e5a7c8a7e8800127d47cb1e116b60", ")"));
+      (0, import_kolmafia87.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("ab8fa37d2b87da8bb62b2acd92920c3698b85605", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia87.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -41799,7 +41799,7 @@ function killRobortCreaturesForFree() {
   while (freeKill && CombatLoversLocket_exports.have() && CombatLoversLocket_exports.reminiscesLeft() > 1) {
     if (_loop2()) break;
   }
-  if (!Robortender_exports.currentDrinks().includes($item(_templateObject3872 || (_templateObject3872 = _taggedTemplateLiteral128(["drive-by shooting"])))) && (0, import_kolmafia133.availableAmount)($item(_templateObject3882 || (_templateObject3882 = _taggedTemplateLiteral128(["fish head"])))) > currentHeads && userConfirmDialog("Garbo managed to rustle up a fish head, would you like it to use it to make a drive-by shooting so you can benefit from your robortender? Sorry for flip-flopping on this, life is hard.", true)) {
+  if (!Robortender_exports.currentDrinks().includes($item(_templateObject3872 || (_templateObject3872 = _taggedTemplateLiteral128(["drive-by shooting"])))) && (0, import_kolmafia133.availableAmount)($item(_templateObject3882 || (_templateObject3882 = _taggedTemplateLiteral128(["fish head"])))) > currentHeads && (!globalOptions.nobarf || targetingMeat()) && userConfirmDialog("Garbo managed to rustle up a fish head, would you like it to use it to make a drive-by shooting so you can benefit from your robortender? Sorry for flip-flopping on this, life is hard.", true)) {
     if (!have($item(_templateObject3892 || (_templateObject3892 = _taggedTemplateLiteral128(["drive-by shooting"]))))) (0, import_kolmafia133.create)($item(_templateObject3902 || (_templateObject3902 = _taggedTemplateLiteral128(["drive-by shooting"]))));
     Robortender_exports.feed($item(_templateObject39110 || (_templateObject39110 = _taggedTemplateLiteral128(["drive-by shooting"]))));
     setBestLeprechaunAsMeatFamiliar();
