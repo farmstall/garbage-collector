@@ -55,7 +55,6 @@ const experienceFamiliars: ExperienceFamiliar[] = [
     used: () => {
       return (
         $familiar`Cooler Yeti`.experience >= 400 ||
-        // globalOptions.ascend ||
         !globalOptions.prefs.chargeYeti
       );
     },
