@@ -24331,7 +24331,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia87.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("eaec4969dc31f80958cd3b535fb8e4df28288d64", ")"));
+      (0, import_kolmafia87.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("600f57d77363c56829f1d9c75ae3b02e0585fa5f", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia87.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -27898,7 +27898,8 @@ var experienceFamiliars = [{
 }, {
   familiar: $familiar(_templateObject4129 || (_templateObject4129 = _taggedTemplateLiteral87(["Cooler Yeti"]))),
   used: function() {
-    return $familiar(_templateObject5107 || (_templateObject5107 = _taggedTemplateLiteral87(["Cooler Yeti"]))).experience >= 400 || globalOptions.ascend || !globalOptions.prefs.chargeYeti;
+    return $familiar(_templateObject5107 || (_templateObject5107 = _taggedTemplateLiteral87(["Cooler Yeti"]))).experience >= 400 || // globalOptions.ascend ||
+    !globalOptions.prefs.chargeYeti;
   },
   // Vintage Smart Drink is 40 adventures
   useValue: getAverageAdventures($item(_templateObject6101 || (_templateObject6101 = _taggedTemplateLiteral87(["vintage smart drink"])))) * get("valueOfAdventure"),
