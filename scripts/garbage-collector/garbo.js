@@ -24585,7 +24585,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia88.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("ff7d9c3806d27feff46624a9ecec5908ed56b185", ")"));
+      (0, import_kolmafia88.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("310184056067db8cdae7298f72001d22219b6cd1", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia88.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -24770,9 +24770,13 @@ function withLocation(location, action) {
 }
 function freeRest() {
   if (get("timesRested") >= (0, import_kolmafia88.totalFreeRests)()) return false;
+  var start = (0, import_kolmafia88.myFamiliar)();
+  if (have($familiar(_templateObject4119 || (_templateObject4119 = _taggedTemplateLiteral78(["Skeleton of Crimbo Past"])))) && get("_knuckleboneRests", 0) < 5) {
+    (0, import_kolmafia88.useFamiliar)($familiar(_templateObject4218 || (_templateObject4218 = _taggedTemplateLiteral78(["Skeleton of Crimbo Past"]))));
+  }
   if ((0, import_kolmafia88.myHp)() >= (0, import_kolmafia88.myMaxhp)() && (0, import_kolmafia88.myMp)() >= (0, import_kolmafia88.myMaxmp)()) {
-    if (acquire(1, $item(_templateObject4119 || (_templateObject4119 = _taggedTemplateLiteral78(["awful poetry journal"]))), 1e4, false)) {
-      (0, import_kolmafia88.use)($item(_templateObject4218 || (_templateObject4218 = _taggedTemplateLiteral78(["awful poetry journal"]))));
+    if (acquire(1, $item(_templateObject4317 || (_templateObject4317 = _taggedTemplateLiteral78(["awful poetry journal"]))), 1e4, false)) {
+      (0, import_kolmafia88.use)($item(_templateObject4416 || (_templateObject4416 = _taggedTemplateLiteral78(["awful poetry journal"]))));
     } else {
       var bestSkill = maxBy(import_kolmafia88.Skill.all().filter(function(sk) {
         return have(sk) && (0, import_kolmafia88.mpCost)(sk) >= 1;
@@ -24782,15 +24786,12 @@ function freeRest() {
       (0, import_kolmafia88.useSkill)(bestSkill);
     }
   }
-  if (have($familiar(_templateObject4317 || (_templateObject4317 = _taggedTemplateLiteral78(["Skeleton of Crimbo Past"])))) && get("_knuckleboneRests", 0) < 5) {
-    var start = (0, import_kolmafia88.myFamiliar)();
-    (0, import_kolmafia88.useFamiliar)($familiar(_templateObject4416 || (_templateObject4416 = _taggedTemplateLiteral78(["Skeleton of Crimbo Past"]))));
-    (0, import_kolmafia88.visitUrl)("campground.php?action=rest");
+  var timesRested = get("timesRested");
+  (0, import_kolmafia88.visitUrl)("campground.php?action=rest");
+  if (start !== (0, import_kolmafia88.myFamiliar)()) {
     (0, import_kolmafia88.useFamiliar)(start);
-  } else {
-    (0, import_kolmafia88.visitUrl)("campground.php?action=rest");
   }
-  return true;
+  return timesRested < get("timesRested");
 }
 function printEventLog() {
   if (resetDailyPreference("garboTargetDate")) {
@@ -36268,7 +36269,9 @@ function fillPantsgivingFullness() {
   return {
     name: "Fill Pantsgiving/Toilet Fullness",
     ready: function() {
-      return !globalOptions.nodiet;
+      return !globalOptions.nodiet && sum($slots.all(), function(slot) {
+        return get2("Stomach Capacity", (0, import_kolmafia132.equippedItem)(slot));
+      }) <= 0;
     },
     completed: function() {
       return getRemainingStomach() <= 0;
@@ -36285,7 +36288,9 @@ function fillSweatyLiver() {
   return {
     name: "Fill Sweaty Liver",
     ready: function() {
-      return !globalOptions.nodiet && DesignerSweatpants_exports.canUseSkill($skill(_templateObject1069 || (_templateObject1069 = _taggedTemplateLiteral127(["Sweat Out Some Booze"])))) && (0, import_kolmafia132.myInebriety)() > 0 && DesignerSweatpants_exports.availableCasts($skill(_templateObject1165 || (_templateObject1165 = _taggedTemplateLiteral127(["Sweat Out Some Booze"])))) === DesignerSweatpants_exports.potentialCasts($skill(_templateObject1260 || (_templateObject1260 = _taggedTemplateLiteral127(["Sweat Out Some Booze"]))));
+      return !globalOptions.nodiet && DesignerSweatpants_exports.canUseSkill($skill(_templateObject1069 || (_templateObject1069 = _taggedTemplateLiteral127(["Sweat Out Some Booze"])))) && (0, import_kolmafia132.myInebriety)() > 0 && DesignerSweatpants_exports.availableCasts($skill(_templateObject1165 || (_templateObject1165 = _taggedTemplateLiteral127(["Sweat Out Some Booze"])))) === DesignerSweatpants_exports.potentialCasts($skill(_templateObject1260 || (_templateObject1260 = _taggedTemplateLiteral127(["Sweat Out Some Booze"])))) && sum($slots.all(), function(slot) {
+        return get2("Liver Capacity", (0, import_kolmafia132.equippedItem)(slot));
+      }) <= 0;
     },
     completed: function() {
       return $skill(_templateObject1358 || (_templateObject1358 = _taggedTemplateLiteral127(["Sweat Out Some Booze"]))).dailylimit === 0 || (0, import_kolmafia132.myInebriety)() - DesignerSweatpants_exports.potentialCasts($skill(_templateObject1455 || (_templateObject1455 = _taggedTemplateLiteral127(["Sweat Out Some Booze"])))) > (0, import_kolmafia132.inebrietyLimit)();
