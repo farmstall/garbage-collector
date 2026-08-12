@@ -24600,7 +24600,7 @@ function checkGithubVersion() {
       var releaseSHA = (_gitBranches$find = gitBranches.find(function(branchInfo) {
         return branchInfo.name === "release";
       })) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      (0, import_kolmafia88.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("5ab6688f3b772d7150b57e218f548908b5c4238b", ")"));
+      (0, import_kolmafia88.print)("Local Version: ".concat(localSHA, " (built from ").concat("main", "@").concat("c63eda9b2aedde4f45f9bbb95ac550c4210824c4", ")"));
       if (releaseSHA === localSHA) {
         (0, import_kolmafia88.print)("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === void 0) {
@@ -41022,7 +41022,7 @@ function deliverThesisIfAble() {
     ensureEffect($effect(_templateObject31910 || (_templateObject31910 = _taggedTemplateLiteral135(["Triple-Sized"]))));
     (0, import_kolmafia138.outfit)("checkpoint");
   }
-  (0, import_kolmafia138.cliExecute)("gain ".concat(requiredMuscle, " muscle"));
+  (0, import_kolmafia138.cliExecute)("try; gain ".concat(requiredMuscle, " muscle"));
   if (molemanReady()) {
     withMacro(Macro2.skill($skill(_templateObject3203 || (_templateObject3203 = _taggedTemplateLiteral135(["deliver your thesis!"])))), function() {
       return (0, import_kolmafia138.use)($item(_templateObject32110 || (_templateObject32110 = _taggedTemplateLiteral135(["molehill mountain"]))));
