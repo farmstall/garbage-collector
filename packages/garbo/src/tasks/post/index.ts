@@ -72,6 +72,7 @@ import {
   lavaDogsComplete,
   leprecondoTask,
 } from "../../resources";
+import { FarmingStrategy } from "../../farmingStrategy";
 
 const STUFF_TO_CLOSET = $items`bowling ball, funky junk key`;
 const STUFF_TO_USE = $items`Armory keycard, bottle-opener keycard, SHAWARMA Initiative Keycard`;
@@ -92,26 +93,37 @@ function useStuff(): GarboPostTask {
   };
 }
 
-const BARF_PLANTS = [
-  FloristFriar.StealingMagnolia,
-  FloristFriar.AloeGuvnor,
-  FloristFriar.PitcherPlant,
-];
+const BARF_PLANTS = () =>
+  FarmingStrategy.isUnderwater()
+    ? [
+        FloristFriar.Crookweed,
+        FloristFriar.ElectricEelgrass,
+        FloristFriar.Duckweed,
+      ]
+    : [
+        FloristFriar.StealingMagnolia,
+        FloristFriar.AloeGuvnor,
+        FloristFriar.PitcherPlant,
+      ];
 function floristFriars(): GarboPostTask {
   return {
     name: "Florist Plants",
-    completed: () => FloristFriar.isFull($location`Barf Mountain`),
+    completed: () => FloristFriar.isFull(FarmingStrategy.location),
     ready: () =>
-      get("lastAdventure") === $location`Barf Mountain` &&
+      get("lastAdventure") === FarmingStrategy.location &&
       FloristFriar.have() &&
-      BARF_PLANTS.some((flower) => flower.available($location`Barf Mountain`)),
+      BARF_PLANTS().some((flower) =>
+        flower.available(FarmingStrategy.location),
+      ),
     do: () =>
-      BARF_PLANTS.filter((flower) =>
-        flower.available($location`Barf Mountain`),
-      ).forEach((flower) => flower.plant()),
+      BARF_PLANTS()
+        .filter((flower) => flower.available(FarmingStrategy.location))
+        .forEach((flower) => flower.plant()),
     available: () =>
       FloristFriar.have() &&
-      BARF_PLANTS.some((flower) => flower.available($location`Barf Mountain`)),
+      BARF_PLANTS().some((flower) =>
+        flower.available(FarmingStrategy.location),
+      ),
   };
 }
 
@@ -430,7 +442,9 @@ function usePorkToilet(): GarboPostTask {
   };
 }
 
-export function PostQuest(completed?: () => boolean): Quest<GarboTask> {
+export function PostQuest<C = void>(
+  completed?: () => boolean,
+): Quest<GarboTask<C>, C> {
   return {
     name: "Postcombat",
     completed,
