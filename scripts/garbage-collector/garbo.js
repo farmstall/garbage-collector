@@ -19782,10 +19782,7 @@ var THE_CORAL_CORRAL = {
     var banish = _ref7.banish;
     var delevel = kolmafia.myBuffedstat($stat`Moxie`) < $monster`sea cow`.baseAttack + 10 || have$P($skill`Hero of the Half-Shell`) && kolmafia.itemType(kolmafia.equippedItem($slot`offhand`)) === "shield" && kolmafia.myBuffedstat($stat`Muscle`) < $monster`sea cow`.baseAttack + 10;
     var macro = new Macro().externalIf(delevel, Macro.delevel()).externalIf(redTaffyWorth(), Macro.tryItem($item`pulled red taffy`)).meatKill(false);
-    if (banish) {
-      Macro.if_($monsters`Mer-kin rustler, sea cowboy`, banish.macro).step(macro);
-    }
-    return macro;
+    return banish ? Macro.if_($monsters`Mer-kin rustler, sea cowboy`, banish.macro).step(macro) : macro;
   })
 };
 function currentStrategy() {
@@ -20059,7 +20056,7 @@ function checkGithubVersion() {
       // Query GitHub for latest release commit
       var gitBranches = JSON.parse(gitData);
       var releaseSHA = (_gitBranches$find = gitBranches.find(branchInfo => branchInfo.name === "release")) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"c90bc8b229e4ae9760016cd976527d89cb59c141"})`);
+      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"4e9cd94f00bf43e46057bfddc71f19b34e32d99c"})`);
       if (releaseSHA === localSHA) {
         kolmafia.print("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === undefined) {
