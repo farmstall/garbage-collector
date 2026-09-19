@@ -13,7 +13,6 @@ import {
   familiarEquippedEquipment,
   getAutoAttack,
   haveOutfit,
-  inebrietyLimit,
   isBanished,
   Item,
   itemAmount,
@@ -26,7 +25,6 @@ import {
   myBuffedstat,
   myClass,
   myFamiliar,
-  myInebriety,
   myLevel,
   myThrall,
   myTurncount,
@@ -147,6 +145,7 @@ import {
   romanticMonsterImpossible,
   safeRestore,
   setChoice,
+  sober,
   targetingMeat,
   targetMeat,
   tryFindFreeRunOrBanish,
@@ -167,7 +166,6 @@ import { runTargetFight } from "./target/execution";
 import { TargetFightRunOptions } from "./target/staging";
 
 import {
-  expectedFreeFightQuestFights,
   FreeFightQuest,
   possibleFreeFightQuestTentacleFights,
 } from "./tasks/freeFight";
@@ -408,7 +406,7 @@ function familiarSpec(underwater: boolean, fight: CopyTargetFight): OutfitSpec {
 }
 
 export function dailyFights(): void {
-  if (myInebriety() > inebrietyLimit()) return;
+  if (!sober()) return;
 
   if (copyTargetSources.some((source) => source.potential())) {
     withStash($items`Spooky Putty sheet`, () => {
@@ -1716,8 +1714,8 @@ function targetCopiesInProgress(): boolean {
   );
 }
 
-export function freeRunFights(): void {
-  if (myInebriety() > inebrietyLimit()) return;
+function freeRunFights(): void {
+  if (!sober()) return;
   if (targetCopiesInProgress()) return;
 
   propertyManager.setChoices({
@@ -1748,7 +1746,8 @@ export function freeRunFights(): void {
 }
 
 export function freeFights(): void {
-  if (myInebriety() > inebrietyLimit()) return;
+  // These fights change familiars, so exclude Stooper's extra capacity.
+  if (!sober()) return;
   if (targetCopiesInProgress()) return;
 
   propertyManager.setChoices({
@@ -1891,7 +1890,7 @@ export function deliverThesisIfAble(): void {
   postCombatActions();
 }
 
-export function doSausage(): void {
+function doSausage(): void {
   if (!kramcoGuaranteed()) {
     return;
   }
@@ -2278,18 +2277,6 @@ function killRobortCreaturesForFree() {
     Robortender.feed($item`drive-by shooting`);
     setBestLeprechaunAsMeatFamiliar();
   }
-}
-
-// Expected free fights, not including tentacles
-export function estimatedFreeFights(): number {
-  return (
-    sum(freeFightSources, (source: FreeFight) => {
-      const avail = source.available();
-      return typeof avail === "number" ? avail : toInt(avail);
-    }) +
-    expectedFreeFightQuestFights() +
-    expectedFreeGiantSandwormQuestFights()
-  );
 }
 
 // Possible additional free fights from Eldritch Attunement

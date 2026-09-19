@@ -71,7 +71,7 @@ interface FarmingStrategyOptions {
   location: Location;
   targetMonster: Delayed<Monster>;
   shouldOlfact: boolean;
-  combat: GarboStrategy<FarmingContext>;
+  combat: (context: FarmingContext) => Macro;
 
   outfit?: (context: FarmingContext) => OutfitSpec;
   ncTurns?: Delayed<number>;
@@ -155,37 +155,38 @@ class FarmingStrategySkeleton {
   monstersToBanish(): Monster[] {
     return this.banishMonsters.filter((m) => !isBanished(m));
   }
+
+  strategy(): GarboStrategy<FarmingContext> {
+    return new GarboStrategy(this.combat);
+  }
 }
 
-export const FarmingStrategy = new Proxy(
-  new FarmingStrategySkeleton() as unknown as Readonly<FarmingStrategySkeleton>,
-  {
-    get: (target, prop, receiver) => {
-      if (
-        Object.prototype.hasOwnProperty.call(
-          FarmingStrategySkeleton.prototype,
-          prop,
-        )
-      ) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const method = (FarmingStrategySkeleton.prototype as any)[prop];
-        method.bind(receiver);
-      }
+export const FarmingStrategy = new Proxy(new FarmingStrategySkeleton(), {
+  get: (target, prop, receiver) => {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        FarmingStrategySkeleton.prototype,
+        prop,
+      )
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const method = (FarmingStrategySkeleton.prototype as any)[prop];
+      method.bind(receiver);
+    }
 
-      const strategyOptions = currentStrategy();
+    const strategyOptions = currentStrategy();
 
-      const stringProp = String(prop);
-      if (stringProp in strategyOptions) {
-        return strategyOptions[stringProp as keyof FarmingStrategyOptions];
-      }
-      if (stringProp in DEFAULT_OPTIONS) {
-        return DEFAULT_OPTIONS[stringProp as keyof typeof DEFAULT_OPTIONS];
-      }
-      // Fallback to standard target resolution
-      return Reflect.get(target, prop, receiver);
-    },
+    const stringProp = String(prop);
+    if (stringProp in strategyOptions) {
+      return strategyOptions[stringProp as keyof FarmingStrategyOptions];
+    }
+    if (stringProp in DEFAULT_OPTIONS) {
+      return DEFAULT_OPTIONS[stringProp as keyof typeof DEFAULT_OPTIONS];
+    }
+    // Fallback to standard target resolution
+    return Reflect.get(target, prop, receiver);
   },
-);
+});
 
 const BARF_MOUNTAIN: FarmingStrategyOptions = {
   stasisRounds: 20,
@@ -214,15 +215,7 @@ const BARF_MOUNTAIN: FarmingStrategyOptions = {
         : [],
   }),
 
-  combat: new GarboStrategy(
-    () => Macro.meatKill(),
-    () =>
-      Macro.if_(
-        `(monsterid ${globalOptions.target.id}) && !gotjump && !(pastround 2)`,
-        Macro.meatKill(),
-      ).abort(),
-  ),
-
+  combat: () => Macro.meatKill(),
   post: completeBarfQuest,
 };
 
@@ -245,24 +238,28 @@ const THE_CORAL_CORRAL: FarmingStrategyOptions = {
     return banishItem ? { equip: [banishItem] } : {};
   },
 
-  combat: new GarboStrategy(({ banish }) => {
-    const delevel =
-      myBuffedstat($stat`Moxie`) < $monster`sea cow`.baseAttack + 10 ||
-      (have($skill`Hero of the Half-Shell`) &&
-        itemType(equippedItem($slot`offhand`)) === "shield" &&
-        myBuffedstat($stat`Muscle`) < $monster`sea cow`.baseAttack + 10);
-
-    const macro = new Macro()
-      .externalIf(delevel, Macro.delevel())
+  combat: ({ banish }) =>
+    Macro.externalIf(
+      !get("seahorseName"),
+      Macro.if_(
+        $monster`wild seahorse`,
+        Macro.item($item`sea cowbell`)
+          .item($item`sea cowbell`)
+          .item($item`sea cowbell`)
+          .item($item`sea lasso`)
+          .abortWithMsg("Wild seahorse should have been tamed, what happened?"),
+      ),
+    )
+      .farmingBanish(banish)
+      .externalIf(
+        myBuffedstat($stat`Moxie`) < $monster`sea cow`.baseAttack + 10 ||
+          (have($skill`Hero of the Half-Shell`) &&
+            itemType(equippedItem($slot`offhand`)) === "shield" &&
+            myBuffedstat($stat`Muscle`) < $monster`sea cow`.baseAttack + 10),
+        Macro.delevel(),
+      )
       .externalIf(redTaffyWorth(), Macro.tryItem($item`pulled red taffy`))
-      .meatKill(false);
-
-    return banish
-      ? Macro.if_($monsters`Mer-kin rustler, sea cowboy`, banish.macro).step(
-          macro,
-        )
-      : macro;
-  }),
+      .meatKill(),
 };
 
 function currentStrategy(): FarmingStrategyOptions {

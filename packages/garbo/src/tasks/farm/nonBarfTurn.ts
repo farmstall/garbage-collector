@@ -33,7 +33,7 @@ import {
   withProperty,
 } from "libram";
 import { getTasks, OutfitSpec, Quest } from "grimoire-kolmafia";
-import { getAvailableUltraRareZones, unperidotableZones } from "garbo-lib";
+import { getAvailableUltraRareZones } from "garbo-lib";
 
 import { Macro } from "../../combat";
 import { GarboStrategy } from "../../combatStrategy";
@@ -240,11 +240,9 @@ function canGetFusedFuse() {
 }
 
 const peridotZone = () =>
-  getAvailableUltraRareZones().find(
-    (l) => PeridotOfPeril.canImperil(l) && !unperidotableZones.includes(l),
-  );
+  getAvailableUltraRareZones().find((l) => PeridotOfPeril.canImperil(l));
 
-export const NonBarfTurnTasks: AlternateTask<FarmingContext>[] = [
+const NonBarfTurnTasks: AlternateTask<FarmingContext>[] = [
   {
     name: "Make Mimic Eggs (whatever we can)",
     ready: () => have($familiar`Chest Mimic`),
@@ -474,7 +472,7 @@ export const NonBarfTurnTasks: AlternateTask<FarmingContext>[] = [
   },
 ];
 
-export function nonBarfTurns(): number {
+function nonBarfTurns(): number {
   return sum(
     NonBarfTurnTasks.filter(
       (t) => (t.ready?.(EMPTY_CONTEXT) ?? true) && !t.completed(EMPTY_CONTEXT),
