@@ -1852,7 +1852,7 @@ function tuple() {
  * @param right The other array to compare
  * @returns Whether the two arrays are shallowly equal
  */
-function arrayEquals$1(left, right) {
+function arrayEquals(left, right) {
   if (left.length !== right.length) return false;
   return left.every((element, index) => element === right[index]);
 }
@@ -6368,7 +6368,7 @@ var Skills = {
  */
 function educate(skills) {
   var skillsArray = Array.isArray(skills) ? skills.slice(0, 2) : [skills];
-  if (arrayEquals$1(skillsArray, getSkills())) return true;
+  if (arrayEquals(skillsArray, getSkills())) return true;
   var _iterator = _createForOfIteratorHelper(skillsArray),
     _step;
   try {
@@ -9428,7 +9428,7 @@ function setFurniture() {
   if (new Set(nonemptyFurniture).size !== nonemptyFurniture.length) return false;
   directlyUse($item`Leprecondo`);
   kolmafia.runChoice(1, furniture.map((piece, index) => `r${3 - index}=${FURNITURE_PIECES.indexOf(piece)}`).join("&"));
-  return arrayEquals$1(installedFurniture(), furniture);
+  return arrayEquals(installedFurniture(), furniture);
 }
 /**
  * @param furniture The set of furniture to examine; defaults to currently installed furniture. Reads furniture from most important (bottom right) to least important (top left)
@@ -17787,8 +17787,8 @@ function verifyDependencies(tasks) {
 }
 
 var FarmingMethod = /*#__PURE__*/function (FarmingMethod) {
-  FarmingMethod[FarmingMethod["BARF_MOUNTAIN"] = 0] = "BARF_MOUNTAIN";
-  FarmingMethod[FarmingMethod["THE_CORAL_CORRAL"] = 1] = "THE_CORAL_CORRAL";
+  FarmingMethod["BARF_MOUNTAIN"] = "Barf Mountain";
+  FarmingMethod["THE_CORAL_CORRAL"] = "The Coral Corral";
   return FarmingMethod;
 }({});
 var workshedAliases = [{
@@ -17815,6 +17815,26 @@ var allWorkshedAliases = [].concat(_toConsumableArray(workshedAliases.map(_ref =
     aliases: [item.name.toLowerCase()]
   };
 })));
+var farmingStrategyAliases = {
+  [FarmingMethod.BARF_MOUNTAIN]: {
+    location: $location`Barf Mountain`,
+    aliases: ["barf", "tourists", "barfmountain", "dinsey"]
+  },
+  [FarmingMethod.THE_CORAL_CORRAL]: {
+    location: $location`The Coral Corral`,
+    aliases: ["cowo", "corral", "ranch", "coolranch", "coral", "cows"]
+  }
+};
+function stringToFarmingMethod(s) {
+  var _Object$entries$find;
+  return ((_Object$entries$find = Object.entries(farmingStrategyAliases).find(_ref2 => {
+    var _ref3 = _slicedToArray(_ref2, 2),
+      _ref3$ = _ref3[1],
+      location = _ref3$.location,
+      aliases = _ref3$.aliases;
+    return kolmafia.toLocation(s) === location || aliases.includes(s.toLowerCase());
+  })) === null || _Object$entries$find === void 0 ? void 0 : _Object$entries$find[0]) ?? kolmafia.abort(`Invalid farming location: ${s}`);
+}
 function toInitials(s) {
   var initials = s.split(" ").map(term => term[0]).join("");
   return initials.length >= 3 ? initials : "";
@@ -17829,9 +17849,9 @@ function stringToWorkshedItem(s) {
   if (s === "") return null;
   var lowerCaseWorkshed = s.toLowerCase();
   var strippedWorkshed = stripString(lowerCaseWorkshed);
-  var validWorksheds = allWorkshedAliases.filter(_ref2 => {
-    var item = _ref2.item,
-      aliases = _ref2.aliases;
+  var validWorksheds = allWorkshedAliases.filter(_ref4 => {
+    var item = _ref4.item,
+      aliases = _ref4.aliases;
     return toInitials(item.name.toLowerCase()) === lowerCaseWorkshed || item.name.toLowerCase().includes(lowerCaseWorkshed) || stripString(item.name.toLowerCase()).includes(strippedWorkshed) || aliases.some(alias => alias === lowerCaseWorkshed);
   });
 
@@ -17839,8 +17859,8 @@ function stringToWorkshedItem(s) {
   // so throw new Error(text) would result in the text not getting printed.
   if (validWorksheds.length > 1) {
     kolmafia.print(`Invalid Workshed: ${s} matches multiple worksheds! Matched:`, "red");
-    validWorksheds.forEach(_ref3 => {
-      var item = _ref3.item;
+    validWorksheds.forEach(_ref5 => {
+      var item = _ref5.item;
       return kolmafia.print(`${item}`, "red");
     });
     throw new Error();
@@ -17933,9 +17953,9 @@ You can use multiple options in conjunction, e.g. "garbo nobarf ascend"', {
   workshed: Args.custom({
     default: null,
     help: "Intelligently switch into the workshed whose item name you give us. Also accepts substrings of the item name (e.g. dna, trainset), certain shorthand aliases (e.g. car) and initials of length >= 3 (e.g. cmc).",
-    options: [].concat(_toConsumableArray(allWorkshedAliases.map(_ref4 => {
-      var item = _ref4.item,
-        aliases = _ref4.aliases;
+    options: [].concat(_toConsumableArray(allWorkshedAliases.map(_ref6 => {
+      var item = _ref6.item,
+        aliases = _ref6.aliases;
       return [item, `${[].concat(_toConsumableArray(aliases), [toInitials(item.name.toLowerCase())]).filter(alias => alias !== "").join(", ")}`];
     })), [[null, "leave this field blank"]])
   }, stringToWorkshedItem, "Item"),
@@ -18030,20 +18050,15 @@ You can use multiple options in conjunction, e.g. "garbo nobarf ascend"', {
     farmingMethod: Args.custom({
       default: FarmingMethod.BARF_MOUNTAIN,
       help: "Select the farming method to use.",
-      options: [[FarmingMethod.BARF_MOUNTAIN, "barf mountain"], [FarmingMethod.THE_CORAL_CORRAL, "sea cows"]]
-    }, value => {
-      switch (value.toLowerCase()) {
-        case "barf":
-        case "barf mountain":
-          return FarmingMethod.BARF_MOUNTAIN;
-        case "cowo":
-        case "sea cows":
-        case "the coral corral":
-          return FarmingMethod.THE_CORAL_CORRAL;
-        default:
-          return FarmingMethod.BARF_MOUNTAIN;
-      }
-    }, "Farming Method")
+      options: _toConsumableArray(Object.entries(farmingStrategyAliases).map(_ref7 => {
+        var _ref8 = _slicedToArray(_ref7, 2),
+          method = _ref8[0],
+          _ref8$ = _ref8[1],
+          location = _ref8$.location,
+          aliases = _ref8$.aliases;
+        return [method, [location.toString()].concat(_toConsumableArray(aliases)).join(", ")];
+      }))
+    }, stringToFarmingMethod, "Farming Method")
   }),
   /*
     Hidden preferences, CLI input ignored
@@ -18235,14 +18250,15 @@ function underwater(location) {
   return location.environment === "underwater";
 }
 var ILLEGAL_PARENTS = ["Clan Basement", "Psychoses", "PirateRealm", "A Monorail Station", "Memories"];
-var ILLEGAL_ZONES = ["The Drip", "Suburbs"];
-var canAdventureOrUnlockSkipList = [].concat(_toConsumableArray($locations`The Bubblin' Caldera, Barrrney's Barrr, The F'c'le, The Poop Deck, Belowdecks, The Secret Government Laboratory, The Dire Warren, Inside the Palindome, The Haiku Dungeon, An Incredibly Strange Place (Bad Trip), An Incredibly Strange Place (Mediocre Trip), An Incredibly Strange Place (Great Trip), El Vibrato Island, The Daily Dungeon, Trick-or-Treating, Seaside Megalopolis, The Orcish Frat House, Through the Spacegate, Mt. Molehill`), _toConsumableArray(kolmafia.Location.all().filter(_ref => {
+var ILLEGAL_ZONES = ["The Drip", "Suburbs", "The Mer-Kin Deepcity"];
+var canAdventureOrUnlockSkipList = [].concat(_toConsumableArray($locations`The Skate Park, The Bubblin' Caldera, Barrrney's Barrr, The F'c'le, The Poop Deck, Belowdecks, The Secret Government Laboratory, The Dire Warren, Inside the Palindome, The Haiku Dungeon, An Incredibly Strange Place (Bad Trip), An Incredibly Strange Place (Mediocre Trip), An Incredibly Strange Place (Great Trip), El Vibrato Island, The Daily Dungeon, Trick-or-Treating, Seaside Megalopolis, The Orcish Frat House, Through the Spacegate, Mt. Molehill`), _toConsumableArray(kolmafia.Location.all().filter(_ref => {
   var parent = _ref.parent,
     zone = _ref.zone;
   return ILLEGAL_PARENTS.includes(parent) || ILLEGAL_ZONES.includes(zone);
 })));
 function canAdventureOrUnlock(loc) {
   var includeUnlockable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+  var underwaterAllowed = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
   var skiplist = _toConsumableArray(canAdventureOrUnlockSkipList);
   if (!have$P($effect`Ultrahydrated`)) {
     skiplist.push($location`The Oasis`);
@@ -18258,7 +18274,7 @@ function canAdventureOrUnlock(loc) {
     skiplist.push($location`Pandamonium Slums`);
   }
   var canUnlock = includeUnlockable && UnlockableZones.some(z => loc.zone === z.zone && (z.available() || !z.noInv));
-  return !underwater(loc) && !skiplist.includes(loc) && (kolmafia.canAdventure(loc) || canUnlock);
+  return !(underwater(loc) && !(have$P($effect`Fishy`) && underwaterAllowed)) && !skiplist.includes(loc) && (kolmafia.canAdventure(loc) || canUnlock);
 }
 function unlock(loc, value) {
   var unlockableZone = UnlockableZones.find(z => z.zone === loc.zone);
@@ -18475,8 +18491,6 @@ function hasNameCollision(monster) {
   nameCollisionCache.set(monster, false);
   return false;
 }
-// TODO These seem to be bugged peridot zones. Can remove if they get fixed.
-var unperidotableZones = $locations`A Mob of Zeppelin Protesters, The Upper Chamber, The Haunted Billiards Room`;
 /**
  * Retrieve an element from a map if it exists; setting a value for the given key if it doesn't.
  * @param map The map in question.
@@ -18537,7 +18551,7 @@ function considerAbandon(options, locationSkiplist) {
   // consider abandoning
   !location ||
   // if mafia failed to track the location correctly
-  locationSkiplist.includes(location) || !canAdventureOrUnlock(location) ||
+  locationSkiplist.includes(location) || !canAdventureOrUnlock(location, true, options.underwaterAllowed) ||
   // or the zone is marked as "generally cannot adv"
   options.ascend && wandererTurnsAvailableToday(options, location, true) < remaningTurns) // or ascending and not enough turns to finish
   ) {
@@ -18640,12 +18654,12 @@ function valueMonster(m, forceItemDrops, options) {
   var items = kolmafia.itemDropsArray(m).filter(drop => ["", "n"].includes(drop.type));
   var duplicateFactor = !m.attributes.includes("NOCOPY") ? possibleDuplicateFactor : 1;
   // TODO: this should consider unbuffed meat drop and unbuffed item drop, probably
-  var meatDrop = clamp((m.minMeat + m.maxMeat) / 2, 0, 1000);
-  var itemDrop = duplicateFactor * sum(items, drop => {
+  var meat = clamp(kolmafia.meatDrop(m) / 2, 0, 1000);
+  var itemValue = duplicateFactor * sum(items, drop => {
     var yrRate = (drop.type === "" && forceItemDrops ? 100 : drop.rate) / 100;
     return yrRate * options.itemValue(drop.drop);
   });
-  return itemDrop + meatDrop;
+  return itemValue + meat;
 }
 function monsterValues$1(location, forceItemDrops, options) {
   var monsters = availableMonsters(location);
@@ -18749,7 +18763,7 @@ function monsterValues(location, options) {
 }
 function bofaFactory(type, locationSkiplist, options) {
   if (["yellow ray", "freefight", "conditional freefight", "freefight (no items)"].includes(type) && have$P($skill`Just the Facts`)) {
-    var validLocations = kolmafia.Location.all().filter(location => canWander(location, "yellow ray") && canAdventureOrUnlock(location) && !locationSkiplist.includes(location));
+    var validLocations = kolmafia.Location.all().filter(location => canWander(location, "yellow ray") && canAdventureOrUnlock(location, true, options.underwaterAllowed) && !locationSkiplist.includes(location));
     return _toConsumableArray(validLocations).map(l => {
       return new WandererTarget({
         name: `Book of Facts`,
@@ -18880,7 +18894,7 @@ function bestWander(type, locationSkiplist, nameSkiplist, options) {
         bestMonsterCandidate = _targetedMonsterValue2[0],
         monsterTargetedValue = _targetedMonsterValue2[1];
       var shouldRefract = refractedGazeValue > monsterAverageValue && refractedGazeValue > monsterTargetedValue;
-      var shouldPeridot = canImperil(_location) && !unperidotableZones.includes(_location) && !shouldRefract && monsterTargetedValue > monsterAverageValue;
+      var shouldPeridot = canImperil(_location) && !shouldRefract && monsterTargetedValue > monsterAverageValue;
       var _determineWandererLoc = determineWandererLocationInfo(shouldRefract, shouldFeeshCandidate, shouldPeridot, bestMonsterCandidate, monsterTargetedValue, monsterAverageValue, refractedGazeValue),
         bestMonster = _determineWandererLoc.bestMonster,
         monsterValue = _determineWandererLoc.monsterValue,
@@ -18917,7 +18931,7 @@ function wanderWhere(options, type) {
   var locationSkiplist = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
   var candidate = bestWander(type, locationSkiplist, nameSkiplist, options);
   var failed = candidate.targets.filter(target => !target.prepareTurn());
-  var badLocation = !canAdventureOrUnlock(candidate.location) || !unlock(candidate.location, candidate.value) || !canWander(candidate.location, type) ? [candidate.location] : [];
+  var badLocation = !canAdventureOrUnlock(candidate.location, true, options.underwaterAllowed) || !unlock(candidate.location, candidate.value) || !canWander(candidate.location, type) ? [candidate.location] : [];
   if (failed.length > 0 || badLocation.length > 0) {
     return wanderWhere(options, type, [].concat(_toConsumableArray(nameSkiplist), _toConsumableArray(failed.map(target => target.name))), [].concat(_toConsumableArray(locationSkiplist), badLocation));
   } else {
@@ -19727,6 +19741,11 @@ var FarmingStrategySkeleton = /*#__PURE__*/function () {
     value: function monstersToBanish() {
       return this.banishMonsters.filter(m => !kolmafia.isBanished(m));
     }
+  }, {
+    key: "strategy",
+    value: function strategy() {
+      return new GarboStrategy(this.combat);
+    }
   }]);
 }();
 var FarmingStrategy = new Proxy(new FarmingStrategySkeleton(), {
@@ -19761,7 +19780,7 @@ var BARF_MOUNTAIN = {
   outfit: () => ({
     equip: get$2("dinseyRollercoasterNext") && have$P($item`lube-shoes`) ? $items`lube-shoes` : []
   }),
-  combat: new GarboStrategy(() => Macro.meatKill(), () => Macro.if_(`(monsterid ${globalOptions.target.id}) && !gotjump && !(pastround 2)`, Macro.meatKill()).abort()),
+  combat: () => Macro.meatKill(),
   post: completeBarfQuest
 };
 var THE_CORAL_CORRAL = {
@@ -19783,12 +19802,10 @@ var THE_CORAL_CORRAL = {
       equip: [banishItem]
     } : {};
   },
-  combat: new GarboStrategy(_ref7 => {
+  combat: _ref7 => {
     var banish = _ref7.banish;
-    var delevel = kolmafia.myBuffedstat($stat`Moxie`) < $monster`sea cow`.baseAttack + 10 || have$P($skill`Hero of the Half-Shell`) && kolmafia.itemType(kolmafia.equippedItem($slot`offhand`)) === "shield" && kolmafia.myBuffedstat($stat`Muscle`) < $monster`sea cow`.baseAttack + 10;
-    var macro = new Macro().externalIf(delevel, Macro.delevel()).externalIf(redTaffyWorth(), Macro.tryItem($item`pulled red taffy`)).meatKill(false);
-    return banish ? Macro.if_($monsters`Mer-kin rustler, sea cowboy`, banish.macro).step(macro) : macro;
-  })
+    return Macro.externalIf(!get$2("seahorseName"), Macro.if_($monster`wild seahorse`, Macro.item($item`sea cowbell`).item($item`sea cowbell`).item($item`sea cowbell`).item($item`sea lasso`).abortWithMsg("Wild seahorse should have been tamed, what happened?"))).farmingBanish(banish).externalIf(kolmafia.myBuffedstat($stat`Moxie`) < $monster`sea cow`.baseAttack + 10 || have$P($skill`Hero of the Half-Shell`) && kolmafia.itemType(kolmafia.equippedItem($slot`offhand`)) === "shield" && kolmafia.myBuffedstat($stat`Muscle`) < $monster`sea cow`.baseAttack + 10, Macro.delevel()).externalIf(redTaffyWorth(), Macro.tryItem($item`pulled red taffy`)).meatKill();
+  }
 };
 function currentStrategy() {
   switch (globalOptions.prefs.farmingMethod) {
@@ -19820,7 +19837,10 @@ function modeUseLimitedDrops(mode) {
   return [BonusEquipMode.BARF, BonusEquipMode.FREE].includes(mode);
 }
 function modeValueOfMeat(mode) {
-  return modeIsFree(mode) ? 0 : (baseMeat() + (mode === BonusEquipMode.MEAT_TARGET ? targetMeatDifferential() : 0)) / 100;
+  if (modeIsFree(mode)) return 0;
+  if (mode === BonusEquipMode.BARF) return baseMeat() / 100;
+  if (mode === BonusEquipMode.MEAT_TARGET) return targetMeat() / 100;
+  return 0;
 }
 function modeValueOfItem(mode) {
   return mode === BonusEquipMode.BARF ? FarmingStrategy.itemDropValue() : 0;
@@ -19928,15 +19948,6 @@ function mapMonster(location, monster) {
   }
   if (kolmafia.choiceFollowsFight()) kolmafia.runChoice(-1);
 }
-
-/**
- * Returns true if the arguments have all elements equal.
- * @param array1 First array.
- * @param array2 Second array.
- */
-function arrayEquals(array1, array2) {
-  return array1.length === array2.length && array1.every((element, index) => element === array2[index]);
-}
 function questStep(questName) {
   var stringStep = getString(questName);
   if (stringStep === "unstarted" || stringStep === "") return -1;else if (stringStep === "started") return 0;else if (stringStep === "finished") return 999;else {
@@ -20018,19 +20029,14 @@ function safeRestoreMpTarget() {
   }
   return Math.min(kolmafia.myMaxmp(), 200);
 }
-var _ignoreBeatenUp = false;
-var unignoreBeatenUp = () => _ignoreBeatenUp = false;
 function safeRestore() {
-  if (get$2("_lastCombatLost") && kolmafia.lastMonster() !== $monster`Sssshhsssblllrrggghsssssggggrrgglsssshhssslblgl`) {
+  if (kolmafia.lastMonster() === $monster`Sssshhsssblllrrggghsssssggggrrgglsssshhssslblgl`) {
+    if (have$P($effect`Beaten Up`)) uneffect($effect`Beaten Up`);
+  } else if (get$2("_lastCombatLost")) {
     _set("_lastCombatLost", "false");
     throw new Error("You lost your most recent combat! Check to make sure everything is alright before rerunning.");
-  }
-  if (have$P($effect`Beaten Up`) && !_ignoreBeatenUp) {
-    if (kolmafia.lastMonster() === $monster`Sssshhsssblllrrggghsssssggggrrgglsssshhssslblgl`) {
-      uneffect($effect`Beaten Up`);
-    } else {
-      throw new Error("Hey, you're beaten up, and that's a bad thing. Lick your wounds, handle your problems, and run me again when you feel ready.");
-    }
+  } else if (have$P($effect`Beaten Up`)) {
+    throw new Error("Hey, you're beaten up, and that's a bad thing. Lick your wounds, handle your problems, and run me again when you feel ready.");
   }
   var lowPercentageHealth = FarmingStrategy.isUnderwater() ? kolmafia.myInebriety() > kolmafia.inebrietyLimit() ? 0.9 : 0.6 : 0.5;
   if (kolmafia.myHp() < Math.min(kolmafia.myMaxhp() * lowPercentageHealth, get$2("garbo_restoreHpTarget", 2000))) {
@@ -20061,7 +20067,7 @@ function checkGithubVersion() {
       // Query GitHub for latest release commit
       var gitBranches = JSON.parse(gitData);
       var releaseSHA = (_gitBranches$find = gitBranches.find(branchInfo => branchInfo.name === "release")) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"0981a3832822d10adfdfabc88da9db2e4dde2723"})`);
+      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"e837781ca1173fc80373191edb80c7788b627a66"})`);
       if (releaseSHA === localSHA) {
         kolmafia.print("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === undefined) {
@@ -20131,17 +20137,17 @@ var GHOST_DOG_ADVENTURES = ["Puttin' it on Wax", "Wooof! Wooooooof!", "Playing F
 var JUNE_CLEAVER_ADVENTURES = ["Aunts not Ants", "Bath Time", "Beware of Aligator", "Delicious Sprouts", "Hypnotic Master", "Lost and Found", "Poetic Justice", "Summer Days", "Teacher's Pet"];
 var VIOLET_FOG_ADVENTURES = ["She's So Unusual", "The Big Scary Place", "The Prince of Wishful Thinking", "Violet Fog"];
 function lastAdventureWasWeird() {
-  var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-    _ref2$extraEncounters = _ref2.extraEncounters,
-    extraEncounters = _ref2$extraEncounters === void 0 ? [] : _ref2$extraEncounters,
-    _ref2$includeGhostDog = _ref2.includeGhostDog,
-    includeGhostDog = _ref2$includeGhostDog === void 0 ? true : _ref2$includeGhostDog,
-    _ref2$includeHolidayW = _ref2.includeHolidayWanderers,
-    includeHolidayWanderers = _ref2$includeHolidayW === void 0 ? true : _ref2$includeHolidayW,
-    _ref2$includeJuneClea = _ref2.includeJuneCleaver,
-    includeJuneCleaver = _ref2$includeJuneClea === void 0 ? true : _ref2$includeJuneClea,
-    _ref2$includeVioletFo = _ref2.includeVioletFog,
-    includeVioletFog = _ref2$includeVioletFo === void 0 ? true : _ref2$includeVioletFo;
+  var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+    _ref$extraEncounters = _ref.extraEncounters,
+    extraEncounters = _ref$extraEncounters === void 0 ? [] : _ref$extraEncounters,
+    _ref$includeGhostDog = _ref.includeGhostDog,
+    includeGhostDog = _ref$includeGhostDog === void 0 ? true : _ref$includeGhostDog,
+    _ref$includeHolidayWa = _ref.includeHolidayWanderers,
+    includeHolidayWanderers = _ref$includeHolidayWa === void 0 ? true : _ref$includeHolidayWa,
+    _ref$includeJuneCleav = _ref.includeJuneCleaver,
+    includeJuneCleaver = _ref$includeJuneCleav === void 0 ? true : _ref$includeJuneCleav,
+    _ref$includeVioletFog = _ref.includeVioletFog,
+    includeVioletFog = _ref$includeVioletFog === void 0 ? true : _ref$includeVioletFog;
   return [].concat(_toConsumableArray(extraEncounters), _toConsumableArray(includeGhostDog ? GHOST_DOG_ADVENTURES : []), _toConsumableArray(includeHolidayWanderers ? getTodaysHolidayWanderers().map(monster => monster.name) : []), _toConsumableArray(includeJuneCleaver ? JUNE_CLEAVER_ADVENTURES : []), _toConsumableArray(includeVioletFog ? VIOLET_FOG_ADVENTURES : [])).includes(get$2("lastEncounter"));
 }
 var juneCleaverChoiceValues = {
@@ -20214,9 +20220,9 @@ function bestShadowRift() {
         // so we don't really need to compute the actual outfit (or the dropModifier for that matter actually)
         var dropModifier = 1 + kolmafia.numericModifier("Item Drop") / 100;
         return sum(kolmafia.getMonsters(l), m => {
-          return sum(kolmafia.itemDropsArray(m), _ref3 => {
-            var drop = _ref3.drop,
-              rate = _ref3.rate;
+          return sum(kolmafia.itemDropsArray(m), _ref2 => {
+            var drop = _ref2.drop,
+              rate = _ref2.rate;
             return garboValue(drop) * clamp(rate * dropModifier / 100, 0, 1);
           });
         });
@@ -20411,9 +20417,9 @@ var luckyAdventures = [{
   phase: "target",
   value: () => kolmafia.canAdventure($location`Cobb's Knob Treasury`) ? 3 * get$2("valueOfAdventure") // Rough estimation, they have 4x the basemeat of barf
   : 0
-}].concat(_toConsumableArray(luckyAdventureValues.map(_ref4 => {
-  var location = _ref4.location,
-    _value = _ref4.value;
+}].concat(_toConsumableArray(luckyAdventureValues.map(_ref3 => {
+  var location = _ref3.location,
+    _value = _ref3.value;
   return {
     location,
     phase: "barf",
@@ -20421,8 +20427,8 @@ var luckyAdventures = [{
   };
 })));
 function determineBestLuckyAdventure() {
-  return maxBy(luckyAdventures, _ref5 => {
-    var value = _ref5.value;
+  return maxBy(luckyAdventures, _ref4 => {
+    var value = _ref4.value;
     return value();
   });
 }
@@ -20432,8 +20438,8 @@ function getBestLuckyAdventure() {
 }
 var SCALE_PATTERN = /Scale: /;
 var CAP_PATTERN = /Cap: (\d*)/;
-function calculateScalerCap(_ref6) {
-  var attributes = _ref6.attributes;
+function calculateScalerCap(_ref5) {
+  var attributes = _ref5.attributes;
   var scaleMatch = SCALE_PATTERN.test(attributes);
   if (!scaleMatch) return 0;
   var capMatch = CAP_PATTERN.exec(attributes);
@@ -20451,10 +20457,10 @@ function scalerCap(monster) {
 var STRONG_SCALER_THRESHOLD = 1_000;
 var isStrongScaler = m => scalerCap(m) > STRONG_SCALER_THRESHOLD;
 var isFreeAndCopyable = monster => monster.copyable && monster.attributes.includes("FREE");
-var valueDrops = monster => sum(kolmafia.itemDropsArray(monster), _ref7 => {
-  var drop = _ref7.drop,
-    rate = _ref7.rate,
-    type = _ref7.type;
+var valueDrops = monster => sum(kolmafia.itemDropsArray(monster), _ref6 => {
+  var drop = _ref6.drop,
+    rate = _ref6.rate,
+    type = _ref6.type;
   return !["c", "0", "p", "a"].includes(type) ? garboValue(drop) * rate / 100 : 0;
 });
 var isFree = monster => monster.attributes.includes("FREE");
@@ -21922,10 +21928,13 @@ var standardFamiliars = [{
   value: () => garboAverageValue.apply(void 0, _toConsumableArray($items`short beer, short stack of pancakes, short stick of butter, short glass of water, short white`)) / 11 // 9 with blue plate
 }, {
   familiar: $familiar`Robortender`,
-  value: mode => {
-    var olfactedMonster = get$2("olfactedMonster");
-    var olfactedIsFromBarf = olfactedMonster && kolmafia.getMonsters($location`Barf Mountain`).includes(olfactedMonster);
-    return dropChance() * garboValue(dropFrom(mode === "barf" && olfactedIsFromBarf ? olfactedMonster : mode === "target" ? globalOptions.target : $monster.none)) + (currentDrinks().includes($item`Feliz Navidad`) ? felizValue() * 0.25 : 0) + (currentDrinks().includes($item`Newark`) ? newarkValue() * 0.25 : 0);
+  value: (_, rates) => {
+    return dropChance() * sum(_toConsumableArray(rates.entries()), _ref => {
+      var _ref2 = _slicedToArray(_ref, 2),
+        monster = _ref2[0],
+        rate = _ref2[1];
+      return rate * garboValue(dropFrom(monster));
+    }) + (currentDrinks().includes($item`Feliz Navidad`) ? felizValue() * 0.25 : 0) + (currentDrinks().includes($item`Newark`) ? newarkValue() * 0.25 : 0);
   }
 }, {
   familiar: $familiar`Twitching Space Critter`,
@@ -21972,19 +21981,19 @@ var standardFamiliars = [{
 function peaceTurkeyDropChance() {
   return 0.24 + kolmafia.squareRoot(totalFamiliarWeight($familiar`Peace Turkey`)) / 100;
 }
-function getConstantValueFamiliars(mode) {
-  return standardFamiliars.filter(_ref => {
-    var familiar = _ref.familiar;
+function getConstantValueFamiliars(mode, monsterRates) {
+  return standardFamiliars.filter(_ref3 => {
+    var familiar = _ref3.familiar;
     return have$P(familiar);
-  }).map(_ref2 => {
-    var familiar = _ref2.familiar,
-      value = _ref2.value,
-      _ref2$worksOnFreeRun = _ref2.worksOnFreeRun,
-      worksOnFreeRun = _ref2$worksOnFreeRun === void 0 ? false : _ref2$worksOnFreeRun;
+  }).map(_ref4 => {
+    var familiar = _ref4.familiar,
+      value = _ref4.value,
+      _ref4$worksOnFreeRun = _ref4.worksOnFreeRun,
+      worksOnFreeRun = _ref4$worksOnFreeRun === void 0 ? false : _ref4$worksOnFreeRun;
     return {
       familiar,
       worksOnFreeRun,
-      expectedValue: value(mode),
+      expectedValue: value(mode, monsterRates),
       leprechaunMultiplier: findLeprechaunMultiplier(familiar),
       limit: "none"
     };
@@ -22000,8 +22009,8 @@ function cookbookbatPerilBonus() {
   if (!have$P($effect`Ultrahydrated`)) {
     canAdvExclusions.push($location`The Oasis`);
   }
-  var cookbookbatQuestLocations = locationsWithMonsters.filter(l => canAdventureOrUnlock(l, false) && !canAdvExclusions.includes(l));
-  var availablePeridotCookbookbatLocations = cookbookbatQuestLocations.filter(l => canImperil(l) && !unperidotableZones.includes(l));
+  var cookbookbatQuestLocations = locationsWithMonsters.filter(l => canAdventureOrUnlock(l, false, FarmingStrategy.isUnderwater()) && !canAdvExclusions.includes(l));
+  var availablePeridotCookbookbatLocations = cookbookbatQuestLocations.filter(l => canImperil(l));
   var doableQuestChance = availablePeridotCookbookbatLocations.length / cookbookbatQuestLocations.length;
   var averageCookbookbatRewardValue = 3 * garboAverageValue.apply(void 0, _toConsumableArray($items`Vegetable of Jarlsberg, Yeast of Boris, St. Sneaky Pete's Whey`));
 
@@ -22317,7 +22326,8 @@ function wanderer() {
       plentifulMonsters: [globalOptions.target].concat(_toConsumableArray(globalOptions.nobarf ? [] : FarmingStrategy.monsters()), _toConsumableArray(have$P($item`Kramco Sausage-o-Matic™`) ? $monsters`sausage goblin` : [])),
       valueOfAdventure: get$2("valueOfAdventure"),
       takeTurnForProfit: true,
-      canRefractedGaze: have$b() && safeRefractedCasts() > 0
+      canRefractedGaze: have$b() && safeRefractedCasts() > 0,
+      underwaterAllowed: FarmingStrategy.isUnderwater()
     });
   }
   return _wanderer;
@@ -22359,10 +22369,10 @@ function menu$1(adventure) {
     allowAttackFamiliars = _ref$allowAttackFamil === void 0 ? true : _ref$allowAttackFamil,
     _ref$mode = _ref.mode,
     mode = _ref$mode === void 0 ? "free" : _ref$mode;
-  var familiarMenu = [].concat(_toConsumableArray(getConstantValueFamiliars(mode)), _toConsumableArray(getDropFamiliars()), _toConsumableArray(getToyCupidBowFamiliars()), _toConsumableArray(includeExperienceFamiliars ? getExperienceFamiliars(mode) : []), _toConsumableArray(extraFamiliars));
   var _toAdventure = toAdventure(adventure),
     target = _toAdventure.target;
   var monsterRates = adventureTargetToWeightedMap(target);
+  var familiarMenu = [].concat(_toConsumableArray(getConstantValueFamiliars(mode, monsterRates)), _toConsumableArray(getDropFamiliars()), _toConsumableArray(getToyCupidBowFamiliars()), _toConsumableArray(includeExperienceFamiliars ? getExperienceFamiliars(mode) : []), _toConsumableArray(extraFamiliars));
   if (canChooseMacro && kolmafia.myInebriety() <= kolmafia.inebrietyLimit()) {
     if (timeToMeatify()) {
       familiarMenu.push({
@@ -23563,7 +23573,7 @@ function trainNeedsRotating() {
     kolmafia.visitUrl("main.php");
   }
   if (!get$2("trainsetConfiguration")) return true;
-  if (arrayEquals$1(getRotatedCycle(), cycle())) return false;
+  if (arrayEquals(getRotatedCycle(), cycle())) return false;
   if (globalOptions.ascend && estimatedGarboTurns() <= 40) return false;
   var bestStations = getPrioritizedStations();
   if (bestStations.includes(next())) return false;
@@ -25425,6 +25435,12 @@ var Macro = /*#__PURE__*/function (_StrictMacro) {
       // Assume if we have both equipped, we mean to refracted feesh
       Macro.if_("!monsterphylum Fish", Macro.trySkill($skill`Sea *dent: Talk to Some Fish`))).externalIf(kolmafia.haveEquipped($item`blood cubic zirconia`) && safeRefractedCasts() > 0, Macro.trySkill($skill`BCZ: Refracted Gaze`));
     }
+  }, {
+    key: "farmingBanish",
+    value: function farmingBanish(banish) {
+      if (!banish || !FarmingStrategy.banishMonsters.length) return this;
+      return this.if_(FarmingStrategy.banishMonsters, banish.macro);
+    }
   }], [{
     key: "abortWithMsg",
     value: function abortWithMsg(errorMessage) {
@@ -25521,6 +25537,11 @@ var Macro = /*#__PURE__*/function (_StrictMacro) {
     key: "refractedGaze",
     value: function refractedGaze() {
       return new Macro().duplicate();
+    }
+  }, {
+    key: "farmingBanish",
+    value: function farmingBanish(banish) {
+      return new Macro().farmingBanish(banish);
     }
   }]);
 }(StrictMacro);
@@ -26296,7 +26317,6 @@ var FarmTurnEngine = /*#__PURE__*/function (_BaseGarboContextEngi2) {
     }
   }]);
 }(BaseGarboContextEngine);
-
 /**
  * A safe engine for Garbo!
  * Treats soft limits as tasks that should be skipped, with a default max of one attempt for any task.
@@ -26695,7 +26715,7 @@ function leprecondoTask() {
   return {
     name: "Configure Leprecondo",
     ready: () => have$e() && rearrangesRemaining() > 0,
-    completed: () => arrayEquals$1(installedFurniture(), getBestLeprecondoCombination()),
+    completed: () => arrayEquals(installedFurniture(), getBestLeprecondoCombination()),
     do: () => setFurniture.apply(Leprecondo, _toConsumableArray(getBestLeprecondoCombination())),
     spendsTurn: false
   };
@@ -26728,13 +26748,20 @@ var BARF_PLANTS = {
 };
 function floristFriars() {
   var barfPlants = BARF_PLANTS[FarmingStrategy.location.environment];
-  return {
+  var yachtPlants = BARF_PLANTS[$location`The Sunken Party Yacht`.environment];
+  return [{
     name: "Florist Plants",
     completed: () => isFull(FarmingStrategy.location) || barfPlants.length === 0,
     ready: () => get$2("lastAdventure") === FarmingStrategy.location && have$L() && barfPlants.some(flower => flower.available(FarmingStrategy.location)),
     do: () => barfPlants.filter(flower => flower.available(FarmingStrategy.location)).forEach(flower => flower.plant()),
     available: () => have$L() && barfPlants.some(flower => flower.available(FarmingStrategy.location))
-  };
+  }, {
+    name: "Florist Plants (Secondary Location)",
+    completed: () => isFull($location`The Sunken Party Yacht`),
+    ready: () => get$2("lastAdventure") === $location`The Sunken Party Yacht` && isFull(FarmingStrategy.location) && yachtPlants.some(flower => flower.available($location`The Sunken Party Yacht`)),
+    do: () => yachtPlants.filter(flower => flower.available($location`The Sunken Party Yacht`)).forEach(flower => flower.plant()),
+    available: () => realmAvailable("sleaze") && have$L() && yachtPlants.some(flower => flower.available($location`The Sunken Party Yacht`))
+  }];
 }
 function fillPantsgivingFullness() {
   return {
@@ -26952,7 +26979,7 @@ function PostQuest(completed) {
   return {
     name: "Postcombat",
     completed,
-    tasks: [uneffectAttunement(), acquireAbortFreeRun()].concat(_toConsumableArray(workshedTasks()), [handleDrenchedInLava(), fallbot(), closetStuff(), useStuff(), floristFriars(), numberology(), juneCleaver(), fillPantsgivingFullness(), fillSweatyLiver(), funGuySpores(), eightBitFatLoot(), refillCinch(), usePorkToilet(), leafResin(), wardrobeOMatic(), _objectSpread2(_objectSpread2({}, leprecondoTask()), {}, {
+    tasks: [uneffectAttunement(), acquireAbortFreeRun()].concat(_toConsumableArray(workshedTasks()), [handleDrenchedInLava(), fallbot(), closetStuff(), useStuff()], _toConsumableArray(floristFriars()), [numberology(), juneCleaver(), fillPantsgivingFullness(), fillSweatyLiver(), funGuySpores(), eightBitFatLoot(), refillCinch(), usePorkToilet(), leafResin(), wardrobeOMatic(), _objectSpread2(_objectSpread2({}, leprecondoTask()), {}, {
       available: have$e()
     })]).filter(_ref => {
       var available = _ref.available;
@@ -27770,12 +27797,12 @@ var FreeFightTasks = RAW_FIGHTS.map(freeFightTask);
 // Possible additional free fights from tentacles
 function possibleFreeFightQuestTentacleFights() {
   var availableFights = FreeFightTasks.filter(task => {
-    var _task$ready2;
-    return (((_task$ready2 = task.ready) === null || _task$ready2 === void 0 ? void 0 : _task$ready2.call(task)) ?? true) && !task.completed();
+    var _task$ready;
+    return (((_task$ready = task.ready) === null || _task$ready === void 0 ? void 0 : _task$ready.call(task)) ?? true) && !task.completed();
   });
-  return sum(availableFights, _ref7 => {
-    var combatCount = _ref7.combatCount,
-      tentacle = _ref7.tentacle;
+  return sum(availableFights, _ref6 => {
+    var combatCount = _ref6.combatCount,
+      tentacle = _ref6.tentacle;
     return combatCount() * (tentacle ? 1 : 0);
   });
 }
@@ -28115,6 +28142,7 @@ var PostBuffExtensionTasks = [{
   ready: () => realmAvailable("hot"),
   completed: () => countFreeMines() <= 0,
   do: () => kolmafia.cliExecute("oreo 0"),
+  sobriety: "sober",
   spendsTurn: false
 }
 // TODO Add Shadow Rift here if we ever grimoirize it
@@ -28362,7 +28390,7 @@ function familiarSpec(underwater, fight) {
   };
 }
 function dailyFights() {
-  if (kolmafia.myInebriety() > kolmafia.inebrietyLimit()) return;
+  if (!sober()) return;
   if (copyTargetSources.some(source => source.potential())) {
     withStash($items`Spooky Putty sheet`, () => {
       // check if user wants to wish for the copy target before doing setup
@@ -29078,7 +29106,7 @@ function targetCopiesInProgress() {
   return get$2("beGregariousFightsLeft") > 0 || get$2("_monsterHabitatsFightsLeft") > 0 || !romanticMonsterImpossible() || get("Digitize Monster") <= 0;
 }
 function freeRunFights() {
-  if (kolmafia.myInebriety() > kolmafia.inebrietyLimit()) return;
+  if (!sober()) return;
   if (targetCopiesInProgress()) return;
   propertyManager.setChoices({
     1387: 2,
@@ -29117,7 +29145,8 @@ function freeRunFights() {
   });
 }
 function freeFights() {
-  if (kolmafia.myInebriety() > kolmafia.inebrietyLimit()) return;
+  // These fights change familiars, so exclude Stooper's extra capacity.
+  if (!sober()) return;
   if (targetCopiesInProgress()) return;
   propertyManager.setChoices({
     1387: 2,
@@ -30128,7 +30157,7 @@ function entendreValue() {
 function worthFeedingRobortender() {
   if (!globalOptions.nobarf) return true;
   if (isFree(globalOptions.target)) return false;
-  return (globalOptions.target.maxMeat + globalOptions.target.minMeat) / 2 >= 300;
+  return kolmafia.meatDrop(globalOptions.target) >= 300;
 }
 function prepRobortender() {
   if (!have$P($familiar`Robortender`)) return;
@@ -31272,12 +31301,6 @@ var CockroachSetup = {
     spendsTurn: false,
     combat: new GarboStrategy(() => Macro.abortWithMsg("Hit a combat while sailing the high seas!")),
     post: () => unequip($item`PirateRealm eyepatch`) // Unequip the eyepatch when we're done, to avoid mana issues during diet etc
-  }, {
-    name: "Stop Being Beaten Up",
-    completed: () => !have$P($effect`Beaten Up`),
-    do: () => kolmafia.useSkill($skill`Tongue of the Walrus`),
-    spendsTurn: false,
-    post: unignoreBeatenUp
   }]
 };
 
@@ -31693,7 +31716,7 @@ function FarmTurnQuest() {
       completed: () => have$P($effect`Everything looks Beige`) || kolmafia.myAdventures() === 0,
       outfit: context => barfOutfit(FarmingStrategy.outfit(context)),
       do: () => fight(undelay(FarmingStrategy.targetMonster)),
-      combat: FarmingStrategy.combat,
+      combat: FarmingStrategy.strategy(),
       post: () => {
         var _FarmingStrategy$post;
         (_FarmingStrategy$post = FarmingStrategy.post) === null || _FarmingStrategy$post === void 0 || _FarmingStrategy$post.call(FarmingStrategy);
@@ -31706,8 +31729,8 @@ function FarmTurnQuest() {
       completed: () => kolmafia.myAdventures() === 0,
       prepare: context => {
         var _context$banish;
-        if (FarmingStrategy.isUnderwater() && redTaffyWorth() && kolmafia.itemAmount($item`pulled red taffy`) === 0) {
-          acquire(1, $item`pulled red taffy`, averageRedTaffyValue(), false);
+        if (FarmingStrategy.isUnderwater() && redTaffyWorth()) {
+          acquire(estimatedGarboTurns(), $item`pulled red taffy`, averageRedTaffyValue() - 1, false);
         }
         meatMood().execute(estimatedGarboTurns());
         if ((_context$banish = context.banish) !== null && _context$banish !== void 0 && _context$banish.retrieve && context.banish.source instanceof kolmafia.Item) {
@@ -31716,7 +31739,7 @@ function FarmTurnQuest() {
       },
       outfit: context => barfOutfit(FarmingStrategy.outfit(context)),
       do: FarmingStrategy.location,
-      combat: FarmingStrategy.combat,
+      combat: FarmingStrategy.strategy(),
       post: () => {
         var _FarmingStrategy$post2;
         (_FarmingStrategy$post2 = FarmingStrategy.post) === null || _FarmingStrategy$post2 === void 0 || _FarmingStrategy$post2.call(FarmingStrategy);
@@ -31976,7 +31999,7 @@ function canForceNoncombat() {
 function canGetFusedFuse() {
   return realmAvailable("hot") && [1, 2, 3].some(it => get$2(`_volcanoItem${it}`) === $item`fused fuse`.id) && canForceNoncombat();
 }
-var peridotZone = () => getAvailableUltraRareZones().find(l => canImperil(l) && !unperidotableZones.includes(l));
+var peridotZone = () => getAvailableUltraRareZones().find(l => canImperil(l));
 var NonBarfTurnTasks = [{
   name: "Make Mimic Eggs (whatever we can)",
   ready: () => have$P($familiar`Chest Mimic`),
@@ -32564,7 +32587,7 @@ var BarfTurnTasks = [{
     var questMonster = get$2("_cookbookbatQuestMonster");
     if (!questMonster || hasNameCollision(questMonster)) return false;
     var questLocation = get$2("_cookbookbatQuestLastLocation");
-    if (!questLocation || !canAdventureOrUnlock(questLocation, false)) {
+    if (!questLocation || !canAdventureOrUnlock(questLocation, false, FarmingStrategy.isUnderwater())) {
       return false;
     }
     var questReward = get$2("_cookbookbatQuestIngredient");
@@ -32572,7 +32595,7 @@ var BarfTurnTasks = [{
   },
   completed: () => {
     var questLocation = get$2("_cookbookbatQuestLastLocation");
-    return !questLocation || !canImperil(questLocation) || unperidotableZones.includes(questLocation);
+    return !questLocation || !canImperil(questLocation);
   },
   choices: () => {
     var _get;
