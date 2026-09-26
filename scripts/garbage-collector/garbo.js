@@ -18313,8 +18313,8 @@ var wandererSkiplist = $locations`The Smut Orc Logging Camp, The Batrat and Ratb
 function canWanderTypeWander(location) {
   return !wandererSkiplist.includes(location) && location.wanderers;
 }
-function canWander(location, type) {
-  if (underwater(location)) return false;
+function canWander(location, type, underwaterAllowed) {
+  if (underwater(location) && !underwaterAllowed) return false;
   switch (type) {
     case "backup":
     case "freerun":
@@ -18397,13 +18397,13 @@ var WanderingSources = [{
 }];
 function wandererTurnsAvailableToday(options, location, requiresMonsterKill) {
   var canWanderCache = {
-    backup: canWander(location, "backup"),
-    wanderer: canWander(location, "wanderer"),
-    "yellow ray": canWander(location, "yellow ray"),
-    freefight: canWander(location, "freefight"),
-    "conditional freefight": canWander(location, "conditional freefight"),
-    "freefight (no items)": canWander(location, "freefight (no items)"),
-    freerun: canWander(location, "freerun")
+    backup: canWander(location, "backup", options.underwaterAllowed),
+    wanderer: canWander(location, "wanderer", options.underwaterAllowed),
+    "yellow ray": canWander(location, "yellow ray", options.underwaterAllowed),
+    freefight: canWander(location, "freefight", options.underwaterAllowed),
+    "conditional freefight": canWander(location, "conditional freefight", options.underwaterAllowed),
+    "freefight (no items)": canWander(location, "freefight (no items)", options.underwaterAllowed),
+    freerun: canWander(location, "freerun", options.underwaterAllowed)
   };
   var digitize = canWanderCache["backup"] && options.digitzesRemaining ? options.digitzesRemaining(options.estimatedTurns()) : 0;
   var pigSkinnerRay = canWanderCache["backup"] && have$P($skill`Free-For-All`) ? Math.floor(options.estimatedTurns() / 25) : 0;
@@ -18685,7 +18685,7 @@ function monsterValues$1(location, forceItemDrops, options) {
 // Monster item drop values
 function itemDropFactory(type, locationSkiplist, options) {
   if (["yellow ray", "freefight", "conditional freefight"].includes(type)) {
-    var validLocations = kolmafia.Location.all().filter(location => canWander(location, "yellow ray") && canAdventureOrUnlock(location) && !locationSkiplist.includes(location));
+    var validLocations = kolmafia.Location.all().filter(location => canWander(location, "yellow ray", options.underwaterAllowed) && canAdventureOrUnlock(location) && !locationSkiplist.includes(location));
     return _toConsumableArray(validLocations).map(l => {
       return new WandererTarget({
         name: `Item Drop Values`.concat(type === "yellow ray" ? ` (Guaranteed Drops)` : ""),
@@ -18774,7 +18774,7 @@ function monsterValues(location, options) {
 }
 function bofaFactory(type, locationSkiplist, options) {
   if (["yellow ray", "freefight", "conditional freefight", "freefight (no items)"].includes(type) && have$P($skill`Just the Facts`)) {
-    var validLocations = kolmafia.Location.all().filter(location => canWander(location, "yellow ray") && canAdventureOrUnlock(location, true, options.underwaterAllowed) && !locationSkiplist.includes(location));
+    var validLocations = kolmafia.Location.all().filter(location => canWander(location, "yellow ray", options.underwaterAllowed) && canAdventureOrUnlock(location, true, options.underwaterAllowed) && !locationSkiplist.includes(location));
     return _toConsumableArray(validLocations).map(l => {
       return new WandererTarget({
         name: `Book of Facts`,
@@ -18938,7 +18938,7 @@ function bestWander(type, locationSkiplist, nameSkiplist, options) {
     try {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var wanderTarget = _step.value;
-        if (!nameSkiplist.includes(wanderTarget.name) && !locationSkiplist.includes(wanderTarget.location) && canWander(wanderTarget.location, type)) {
+        if (!nameSkiplist.includes(wanderTarget.name) && !locationSkiplist.includes(wanderTarget.location) && canWander(wanderTarget.location, type, options.underwaterAllowed)) {
           var location = wanderTarget.location;
           // Retrieve existing data for location if extant
           var zoneData = ensureMapElement(locationValues, location, {
@@ -19018,7 +19018,7 @@ function wanderWhere(options, type) {
   var locationSkiplist = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
   var candidate = bestWander(type, locationSkiplist, nameSkiplist, options);
   var failed = candidate.targets.filter(target => !target.prepareTurn());
-  var badLocation = !canAdventureOrUnlock(candidate.location, true, options.underwaterAllowed) || !unlock(candidate.location, candidate.value) || !canWander(candidate.location, type) ? [candidate.location] : [];
+  var badLocation = !canAdventureOrUnlock(candidate.location, true, options.underwaterAllowed) || !unlock(candidate.location, candidate.value) || !canWander(candidate.location, type, options.underwaterAllowed) ? [candidate.location] : [];
   if (failed.length > 0 || badLocation.length > 0) {
     return wanderWhere(options, type, [].concat(_toConsumableArray(nameSkiplist), _toConsumableArray(failed.map(target => target.name))), [].concat(_toConsumableArray(locationSkiplist), badLocation));
   } else {
@@ -20179,7 +20179,7 @@ function checkGithubVersion() {
       // Query GitHub for latest release commit
       var gitBranches = JSON.parse(gitData);
       var releaseSHA = (_gitBranches$find = gitBranches.find(branchInfo => branchInfo.name === "release")) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"7dd4785e945b17be7f33f21c39a8db381afcdb09"})`);
+      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"08068224bd7481ce09e56e5aca182c782291961b"})`);
       if (releaseSHA === localSHA) {
         kolmafia.print("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === undefined) {
@@ -21690,7 +21690,6 @@ function potionSetupCompleted() {
  * @param targetsOnly Are we valuing the potions only for meat targets (noBarf)?
  */
 function potionSetup(targetsOnly) {
-  var avoidStats = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
   castAugustScepterBuffs();
   useBusks();
   sweatEquity();
@@ -21710,7 +21709,7 @@ function potionSetup(targetsOnly) {
     }
 
     // Only test potions which are reasonably close to being profitable using historical price.
-    var testPotions = getFarmingPotions(avoidStats).filter(potion => potion.gross(targets) / potion.price(true) > 0.5);
+    var testPotions = getFarmingPotions().filter(potion => potion.gross(targets) / potion.price(true) > 0.5);
     var nonWishTestPotions = testPotions.filter(potion => potion.potion !== $item`pocket wish`);
     nonWishTestPotions.sort((a, b) => b.net(targets) - a.net(targets));
     var excludedEffects = new Set();
@@ -21799,7 +21798,7 @@ function potionSetup(targetsOnly) {
     } finally {
       _iterator5.f();
     }
-    variableMeatPotionsSetup(0, targets, avoidStats);
+    variableMeatPotionsSetup(0, targets);
     completedPotionSetup = true;
   });
 }
@@ -21940,8 +21939,7 @@ var VariableMeatPotion = /*#__PURE__*/function () {
   }]);
 }();
 function variableMeatPotionsSetup(yachtzees, targets) {
-  var avoidStats = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-  var potions = [].concat(_toConsumableArray(avoidStats ? [] : [new VariableMeatPotion($item`love song of sugary cuteness`, 20, 2)]), [new VariableMeatPotion($item`pulled yellow taffy`, 50, 2)], _toConsumableArray(globalOptions.prefs.candydish ? [new VariableMeatPotion($item`porcelain candy dish`, 500, 1)] : []));
+  var potions = [new VariableMeatPotion($item`love song of sugary cuteness`, 20, 2), new VariableMeatPotion($item`pulled yellow taffy`, 50, 2)].concat(_toConsumableArray(globalOptions.prefs.candydish ? [new VariableMeatPotion($item`porcelain candy dish`, 500, 1)] : []));
   var excludedEffects = new Set();
   var _iterator1 = _createForOfIteratorHelper(getActiveEffects()),
     _step1;
@@ -23940,7 +23938,7 @@ function consumeWhileRespectingMoonRestaurant(command, item) {
   var usingMoonZoneRestaurant = availableFromMoonZoneRestaurant(item);
   withProperties({
     autoSatisfyWithCloset: !usingMoonZoneRestaurant && get$2("autoSatisfyWithCloset"),
-    autoSatisfyWithMall: !usingMoonZoneRestaurant
+    autoSatisfyWithMall: false
   }, command);
 }
 function eatSafe(qty, item) {
@@ -24018,7 +24016,9 @@ function drinkSafe(qty, item) {
   }
 }
 function chewSafe(qty, item) {
-  if (!kolmafia.chew(qty, item)) throw "Failed to chew safely";
+  withProperty("autoSatisfyWithMall", false, () => {
+    if (!kolmafia.chew(qty, item)) throw "Failed to chew safely";
+  });
 }
 function consumeSafe(qty, item, additionalValue, skipAcquire) {
   var spleenCleaned = spleenCleaners.get(item);
@@ -24030,7 +24030,7 @@ function consumeSafe(qty, item, additionalValue, skipAcquire) {
   if (!usingMoonZoneRestaurant) {
     if (averageAdventures > 0 || additionalValue) {
       var cap = Math.max(0, averageAdventures * MPA) + (additionalValue ?? 0);
-      acquire(qty, item, cap, true);
+      acquire(qty, item, cap, true, undefined, true);
     } else {
       acquire(qty, item);
     }
@@ -25063,12 +25063,7 @@ function meatTargetOutfit(spec, adventureArgument) {
   var bjornChoice = chooseBjorn(targetingMeat() ? BonusEquipMode.MEAT_TARGET : BonusEquipMode.FREE, outfit.familiar);
   var underwater = (location === null || location === void 0 ? void 0 : location.environment) === "underwater";
   if (underwater) {
-    if (!outfit.familiar.underwater) {
-      outfit.equipFirst(familiarWaterBreathingEquipment);
-    }
-    if (!outfit.equipFirst(waterBreathingEquipment)) {
-      outfit.modifier.push("sea");
-    }
+    outfit.modifier.push("sea");
   }
   if (outfit.familiar === $familiar`Jill-of-All-Trades`) {
     outfit.equip($item`LED candle`);
@@ -26689,6 +26684,7 @@ function freeFightOutfit() {
   var computedSpec = computeOutfitSpec(spec, location);
   validateGarbageFoldable(computedSpec);
   var outfit = Outfit.from(computedSpec, new Error(`Failed to construct outfit from spec ${JSON.stringify(spec)}!`));
+  if (location.environment === "underwater") outfit.modifier.push("+sea");
   outfit.familiar ?? (outfit.familiar = freeFightFamiliar(adventure, computeFamiliarMenuOptions(options.familiarOptions, options.duplicate ?? false, outfit)));
   var mode = location === $location`The Deep Machine Tunnels` ? BonusEquipMode.DMT : BonusEquipMode.FREE;
   if (outfit.familiar !== $familiar`Patriotic Eagle`) {
@@ -31194,7 +31190,7 @@ function outfitBonuses() {
 var CockroachSetup = {
   name: "Setup Cockroach Target",
   ready: () => doingGregFight() && globalOptions.target === $monster`cockroach` && kolmafia.myInebriety() <= kolmafia.inebrietyLimit(),
-  completed: () => get$2("_lastPirateRealmIsland") === $location`Trash Island`,
+  completed: () => questStep$1("_questPirateRealm") > 4,
   tasks: [{
     name: "40 Adventure Failsafe",
     ready: () => kolmafia.myAdventures() <= 40,
@@ -31233,7 +31229,7 @@ var CockroachSetup = {
     },
     outfit: {
       equip: $items`PirateRealm eyepatch`,
-      modifier: kolmafia.Stat.all().map(stat => `-${stat}`)
+      beforeDress: [() => burnLibrams(100)] // Burn our extra mana before we lose it all equipping eyepatch
     },
     limit: {
       tries: 1
@@ -31245,8 +31241,7 @@ var CockroachSetup = {
     completed: () => questStep$1("_questPirateRealm") > 1,
     do: $location`Sailing the PirateRealm Seas`,
     outfit: {
-      equip: $items`PirateRealm eyepatch`,
-      modifier: kolmafia.Stat.all().map(stat => `-${stat}`)
+      equip: $items`PirateRealm eyepatch`
     },
     choices: () => ({
       1352: dessertIslandWorthIt() && get$2("_pirateRealmCrewmate").includes("Cuisinier") ? 6 : 1
@@ -31262,8 +31257,7 @@ var CockroachSetup = {
     completed: () => questStep$1("_questPirateRealm") > 2,
     do: $location`Sailing the PirateRealm Seas`,
     outfit: () => ({
-      equip: $items`PirateRealm eyepatch, PirateRealm party hat, Red Roger's red right foot`.filter(i => have$P(i)),
-      modifier: kolmafia.Stat.all().map(stat => `-${stat}`)
+      equip: $items`PirateRealm eyepatch, PirateRealm party hat, Red Roger's red right foot`.filter(i => have$P(i))
     }),
     choices: () => ({
       1365: 1,
@@ -31303,8 +31297,7 @@ var CockroachSetup = {
     },
     // Land ho!
     outfit: {
-      equip: $items`PirateRealm eyepatch`,
-      modifier: kolmafia.Stat.all().map(stat => `-${stat}`)
+      equip: $items`PirateRealm eyepatch`
     },
     limit: {
       tries: 1
@@ -31335,14 +31328,19 @@ var CockroachSetup = {
       tries: 8
     },
     spendsTurn: true
-  }, {
+  }]
+};
+var CockroachFinish = {
+  name: "Finish Setup Cockroach Target",
+  ready: () => doingGregFight() && globalOptions.target === $monster`cockroach` && kolmafia.myInebriety() <= kolmafia.inebrietyLimit(),
+  completed: () => get$2("_lastPirateRealmIsland") === $location`Trash Island`,
+  tasks: [{
     name: "Final Island Encounter (Island 1 (Dessert))",
     ready: () => questStep$1("_questPirateRealm") === 5 && get$2("_lastPirateRealmIsland") === $location`Dessert Island`,
     completed: () => questStep$1("_questPirateRealm") > 5,
     do: $location`PirateRealm Island`,
     outfit: () => ({
-      equip: $items`PirateRealm eyepatch`,
-      modifier: kolmafia.Stat.all().map(stat => `-${stat}`)
+      equip: $items`PirateRealm eyepatch`
     }),
     choices: {
       1385: 1
@@ -31362,13 +31360,11 @@ var CockroachSetup = {
     },
     do: $location`Crab Island`,
     outfit: () => meatTargetOutfit({
-      modifier: ["-Muscle", "-Mysticality", "-Moxie"],
       equip: $items`PirateRealm eyepatch`,
       avoid: $items`Roman Candelabra`,
-      beforeDress: [() => meatMood(false, targetMeat()).execute(highMeatMonsterCount()),
-      // meatMood is currently difficult to sort for things that give +stats
-      () => potionSetup(false, true) // run potionSetup while avoiding stats. We do not avoid limited use buffs that may still increase stats like paw wishes or pill keeper.
-      ]
+      beforeDress: [() => kolmafia.maximize("MP", false),
+      // Equip some MP stuff while we buff here since our myst was lowered while wearing eyepatch
+      () => meatMood(false, targetMeat()).execute(highMeatMonsterCount()), () => potionSetup(false)]
     }, $location`Crab Island`),
     choices: {
       1368: 1
@@ -32993,7 +32989,7 @@ function main() {
   }
 
   // Cowo is for professionals only
-  if (globalOptions.prefs.farmingMethod === FarmingMethod.THE_CORAL_CORRAL && (kolmafia.effectFact($monster`sea cow`) !== $effect`Fishy` || get$2("seahorseName") === "")) {
+  if (globalOptions.prefs.farmingMethod === FarmingMethod.THE_CORAL_CORRAL && (kolmafia.effectFact($monster`sea cow`) !== $effect`Fishy` || get$2("seahorseName") === "" && get$2("lassoTrainingCount") < 20)) {
     globalOptions.prefs.farmingMethod = FarmingMethod.BARF_MOUNTAIN;
   }
 
@@ -33268,8 +33264,11 @@ function main() {
         // How do we handle if garbo was started without enough turns left without dieting to prep?
         if (globalOptions.target === $monster`cockroach` && !globalOptions.simdiet) {
           if (!globalOptions.nodiet) nonOrganAdventures();
-          runSafeGarboQuests([DailyFamiliarsQuest]); // Prep robortender ahead of time in case it's a giant crab
-          withProperty("removeMalignantEffects", false, () => runGarboQuests([CockroachSetup]));
+          runGarboQuests([CockroachSetup]); // Set up piraterealm up until the final encounter for island 1
+          if (get$2("_lastPirateRealmIsland") === $location`Dessert Island`) {
+            runGarboQuests([CockroachFinish]); // If it's Dessert island, no need to buff beforehand
+          }
+          kolmafia.maximize("MP", false); // Remove our piraterealm eyepatch after we leave piraterealm
         }
         // 0. diet stuff.
         if (globalOptions.nodiet || get$2("_garboYachtzeeChainCompleted", false)) {
@@ -33298,6 +33297,8 @@ function main() {
 
         // 2. do some target copy stuff
         freeFights();
+        runGarboQuests([CockroachFinish]); // Fight the giant giant crab after we've dieted for some extra buffs
+        kolmafia.maximize("MP", false); // Remove our piraterealm eyepatch after we leave piraterealm
         runGarboQuests([SetupTargetCopyQuest]);
         dailyFights();
         if (!globalOptions.nobarf) {
