@@ -20179,7 +20179,7 @@ function checkGithubVersion() {
       // Query GitHub for latest release commit
       var gitBranches = JSON.parse(gitData);
       var releaseSHA = (_gitBranches$find = gitBranches.find(branchInfo => branchInfo.name === "release")) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"08068224bd7481ce09e56e5aca182c782291961b"})`);
+      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"8aab3da56d7736e10833fb9d5680c3f3b8b29e1f"})`);
       if (releaseSHA === localSHA) {
         kolmafia.print("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === undefined) {
@@ -20792,7 +20792,9 @@ function timeSpinnerRefused(monster) {
 function offersMonster(monster) {
   var monids = kolmafia.availableChoiceSelectInputs(1)["monid"];
   if (!monids || Object.keys(monids).length === 0) return null;
-  if (`${monster.id}` in monids) return true;
+  if (Object.keys(monids).map(id => kolmafia.toMonster(id)).includes(monster)) {
+    return true;
+  }
   kolmafia.print(`The Time-Spinner is only offering: ${Object.values(monids).join(", ")}`, HIGHLIGHT);
   return false;
 }
@@ -20848,6 +20850,13 @@ function travelToRecentFight(monster) {
     return false;
   }
   return true;
+}
+function resetSpinnerCache(monster) {
+  if (monster) {
+    refusedMonsterIds.delete(monster.id);
+  } else {
+    refusedMonsterIds.clear();
+  }
 }
 
 var mimicExperienceNeeded = needKickstarterEgg => 50 * (11 - get$2("_mimicEggsObtained")) + (globalOptions.ascend ? needKickstarterEgg && !have$I() && get$2("_mimicEggsObtained") < 11 ? 50 : 0 : 550);
@@ -23137,6 +23146,7 @@ var gregFights = (name, haveCheck, monsterProp, fightsProp, totalCharges) => {
     var bunnyIsBanished = kolmafia.isBanished($monster`fluffy bunny`);
     var adventureFunction = options.useAuto ? garboAdventureAuto : garboAdventure;
     adventureFunction($location`The Dire Warren`, Macro.if_($monster`fluffy bunny`, runMacro).step(options.macro), Macro.if_($monster`fluffy bunny`, runMacro).step(options.macro));
+    resetSpinnerCache(kolmafia.lastMonster());
     if (get$2("lastEncounter") === $monster`fluffy bunny`.name && bunnyIsBanished) {
       var _find;
       var bunnyBanish = (_find = _toConsumableArray(getBanishedMonsters().entries()).find(_ref => {
