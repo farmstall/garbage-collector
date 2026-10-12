@@ -18,18 +18,15 @@ import { bonusGear, toyCupidBow } from "./dropsgear";
 import {
   applyCheeseBonus,
   bestBjornalike,
+  BonusEquipMode,
   cleaverCheck,
   familiarSlotNeededForBreathing,
+  modeValueOfMeat,
   useUPCsIfNeeded,
   validateGarbageFoldable,
   waterBreathingEquipment,
 } from "./lib";
-import {
-  BonusEquipMode,
-  modeValueOfMeat,
-  songboomMeat,
-  targetingMeat,
-} from "../lib";
+import { songboomMeat, targetingMeat } from "../lib";
 import { globalOptions } from "../config";
 import { booleanModifier, meatDrop, setLocation } from "kolmafia";
 import { shouldRedigitize } from "../combat";
@@ -109,6 +106,9 @@ export function meatTargetOutfit(
       )
     ) {
       outfit.equipFirst(waterBreathingEquipment);
+      if (outfit.haveEquipped($item`The Crown of Ed the Undying`)) {
+        outfit.setModes({ edpiece: "fish" });
+      }
     }
     outfit.modifier.push("sea");
   }
