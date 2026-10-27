@@ -18247,7 +18247,7 @@ function underwater(location) {
 }
 var ILLEGAL_PARENTS = ["Clan Basement", "Psychoses", "PirateRealm", "A Monorail Station", "Memories"];
 var ILLEGAL_ZONES = ["The Drip", "Suburbs", "The Mer-Kin Deepcity"];
-var canAdventureOrUnlockSkipList = [].concat(_toConsumableArray($locations`The Skate Park, The Bubblin' Caldera, Barrrney's Barrr, The F'c'le, The Poop Deck, Belowdecks, The Secret Government Laboratory, The Dire Warren, Inside the Palindome, The Haiku Dungeon, An Incredibly Strange Place (Bad Trip), An Incredibly Strange Place (Mediocre Trip), An Incredibly Strange Place (Great Trip), El Vibrato Island, The Daily Dungeon, Trick-or-Treating, Seaside Megalopolis, The Orcish Frat House, Through the Spacegate, Mt. Molehill`), _toConsumableArray(kolmafia.Location.all().filter(_ref => {
+var canAdventureOrUnlockSkipList = [].concat(_toConsumableArray($locations`The Caliginous Abyss, The Skate Park, The Bubblin' Caldera, Barrrney's Barrr, The F'c'le, The Poop Deck, Belowdecks, The Secret Government Laboratory, The Dire Warren, Inside the Palindome, The Haiku Dungeon, An Incredibly Strange Place (Bad Trip), An Incredibly Strange Place (Mediocre Trip), An Incredibly Strange Place (Great Trip), El Vibrato Island, The Daily Dungeon, Trick-or-Treating, Seaside Megalopolis, The Orcish Frat House, Through the Spacegate, Mt. Molehill`), _toConsumableArray(kolmafia.Location.all().filter(_ref => {
   var parent = _ref.parent,
     zone = _ref.zone;
   return ILLEGAL_PARENTS.includes(parent) || ILLEGAL_ZONES.includes(zone);
@@ -19768,7 +19768,7 @@ function checkGithubVersion() {
       // Query GitHub for latest release commit
       var gitBranches = JSON.parse(gitData);
       var releaseSHA = (_gitBranches$find = gitBranches.find(branchInfo => branchInfo.name === "release")) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"abe6718480567bcd5ea5ad94e96d364b0170b9c1"})`);
+      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"5292fe64afaf8db663f95f2a94ca07d925e0a0f4"})`);
       if (releaseSHA === localSHA) {
         kolmafia.print("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === undefined) {
@@ -26414,7 +26414,7 @@ function trackMarginalMpa(remainingTurns) {
   if (!barf) {
     sessions.set("barf", Session.current());
   } else {
-    var turns = barf.diff(current).totalTurns;
+    var turns = current.diff(barf).totalTurns;
     remainingTurns ?? (remainingTurns = estimatedGarboTurns());
     // track items if we have run at least 100 turns in barf mountain or we have less than 200 turns left in barf mountain
     var item = sessions.get("item-start");
