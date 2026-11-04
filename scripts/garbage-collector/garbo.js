@@ -20271,7 +20271,7 @@ function checkGithubVersion() {
       // Query GitHub for latest release commit
       var gitBranches = JSON.parse(gitData);
       var releaseSHA = (_gitBranches$find = gitBranches.find(branchInfo => branchInfo.name === "release")) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"955b7adf197dbbfe5ac860ded88d8afbc2111aa0"})`);
+      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"84d5bc097ff116abff95bd98caf211a4ffbd6289"})`);
       if (releaseSHA === localSHA) {
         kolmafia.print("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === undefined) {
@@ -21468,7 +21468,7 @@ var StashManager = /*#__PURE__*/function () {
       } finally {
         _iterator0.f();
       }
-      var _iterator1 = _createForOfIteratorHelper($familiars.all().filter(have$R)),
+      var _iterator1 = _createForOfIteratorHelper($familiars.all().filter(familiar => have$R(familiar))),
         _step1;
       try {
         for (_iterator1.s(); !(_step1 = _iterator1.n()).done;) {
@@ -21660,7 +21660,7 @@ function setBestLeprechaunAsMeatFamiliar() {
   fam = findBestLeprechaun();
 }
 function meatFamiliar() {
-  return fam ?? (fam = $familiars`Robortender, Jill-of-All-Trades`.find(have$R) ?? findBestLeprechaun());
+  return fam ?? (fam = $familiars`Robortender, Jill-of-All-Trades`.find(familiar => have$R(familiar)) ?? findBestLeprechaun());
 }
 var familiarWaterBreathingEquipment$1 = $items`das boot, little bitty bathysphere`;
 function meatDropWithEquipment(familiar, equip) {
@@ -21676,7 +21676,7 @@ function meatDropWithEquipment(familiar, equip) {
 function underwaterMeatFamiliar() {
   var fallback = meatFamiliar();
   if (familiarCanBreathe(fallback)) return fallback;
-  var breathingEquipment = familiarWaterBreathingEquipment$1.filter(have$R);
+  var breathingEquipment = familiarWaterBreathingEquipment$1.filter(item => have$R(item));
   if (!breathingEquipment.length) return fallback;
   var assumedFreeSlotEquipment = have$R($item`amulet coin`) ? $item`amulet coin` : $item.none;
   var familiarValue = familiar => familiarCanBreathe(familiar) ? meatDropWithEquipment(familiar, assumedFreeSlotEquipment) : Math.max.apply(Math, _toConsumableArray(breathingEquipment.map(equip => meatDropWithEquipment(familiar, equip))));
@@ -29104,8 +29104,11 @@ function setupGarden() {
     kolmafia.use($item`packet of tall grass seeds`);
   }
 }
+function blackRoseWillGrow() {
+  return kolmafia.myGardenType() === "black_rose" && !swappedToday();
+}
 function restoreGarden() {
-  if (canSwapGarden() && startingGarden && have$R(startingGarden)) {
+  if (canSwapGarden() && startingGarden && have$R(startingGarden) && !blackRoseWillGrow()) {
     kolmafia.use(startingGarden);
   }
 }
@@ -29280,7 +29283,7 @@ var PygmyFightTasks = [pygmyTask({
   name: "Drunk Pygmy (Tenth, Save Orb Prediction)",
   ready: () => pygmiesReady() && get$2("_drunkPygmyBanishes") === 9,
   completed: () => get$2("_drunkPygmyBanishes") >= 10,
-  equip: () => $items`miniature crystal ball`.filter(have$R)
+  equip: () => $items`miniature crystal ball`.filter(item => have$R(item))
 }), pygmyTask({
   name: "Drunk Pygmy (Eleventh, Without Saber)",
   ready: () => pygmiesReady() && get$2("_drunkPygmyBanishes") === 10 && (!have$R(saber) || crateStrategy() === "Saber"),
@@ -29311,7 +29314,7 @@ var PygmyFightTasks = [pygmyTask({
   name: "Drunk Pygmy (Release Orb Prediction)",
   ready: () => pygmiesReady() && get$2("_drunkPygmyBanishes") >= 11 && ponder().get(alley) === drunk,
   completed: () => ponder().get(alley) !== drunk,
-  equip: () => $items`miniature crystal ball`.filter(have$R),
+  equip: () => $items`miniature crystal ball`.filter(item => have$R(item)),
   combat: new GarboStrategy(() => Macro.if_(drunk, pygmyMacro()).abort())
 }), pygmyTask({
   name: "Drunk Pygmies (Time-Spinner)",
@@ -29600,6 +29603,8 @@ function remainingShadowRiftFights() {
   return kolmafia.haveEffect(affinity) + (!get$2("_shadowAffinityToday") ? 11 : 0);
 }
 
+var MAX_DMT_SNOWGLOBE_PRICE = 2_000;
+var MAX_SELF_DRIBBLING_BASKETBALL_PRICE = 10_000;
 function bestWitchessPiece() {
   return maxBy(pieces$1, monster => sum(kolmafia.itemDropsArray(monster), _ref => {
     var drop = _ref.drop;
@@ -29624,14 +29629,17 @@ var tearawayPantsFreeFightOutfit = adventure => () => freeFightOutfit({
 });
 function litLeafMacro(monster) {
   var tiedUpItem = new Map([[$monster`flaming leaflet`, $item`tied-up flaming leaflet`], [$monster`flaming monstera`, $item`tied-up flaming monstera`], [$monster`leaviathan`, $item`tied-up leaviathan`]]).get(monster);
-
   // Only convert lassos if we can funksling as the combat counts as a free loss
   return Macro.externalIf(kolmafia.haveEquipped($item`tearaway pants`), Macro.if_(monster, Macro.trySkill($skill`Tear Away your Pants!`))).externalIf(tiedUpItem !== undefined && kolmafia.itemAmount($item`lit leaf lasso`) >= 2 && have$R($skill`Ambidextrous Funkslinging`) && (garboValue(tiedUpItem) - kolmafia.mallPrice($item`lit leaf lasso`)) * 2 >= globalOptions.prefs.valueOfFreeFight, Macro.if_(monster, Macro.tryItem([$item`lit leaf lasso`, $item`lit leaf lasso`]))).basicCombat();
 }
-function dmtCommaValuable() {
+function dmtCommaValuable(basketballThreshold, snowglobeThreshold) {
   if (!have$O()) return false;
-  var cost = kolmafia.mallPrice($item`Deep Machine Tunnels snowglobe`) + (currentFamiliar$1() === $familiar`Machine Elf` ? 0 : kolmafia.mallPrice($item`self-dribbling basketball`));
-  return globalOptions.prefs.valueOfFreeFight * 5 > cost;
+  var basketballCost = kolmafia.mallPrice($item`self-dribbling basketball`);
+  if (basketballCost > basketballThreshold) return false;
+  var snowglobeCost = kolmafia.mallPrice($item`Deep Machine Tunnels snowglobe`);
+  if (snowglobeCost > snowglobeThreshold) return false;
+  var totalCost = snowglobeCost + (currentFamiliar$1() === $familiar`Machine Elf` ? 0 : basketballCost);
+  return globalOptions.prefs.valueOfFreeFight * 5 > totalCost;
 }
 var stunDurations = new Map([[$skill`Blood Bubble`, 1], [$skill`Entangling Noodles`, () => kolmafia.myClass() === $class`Pastamancer` && !have$R($skill`Shadow Noodles`) ? 1 : 0], [$skill`Frost Bite`, 1], [$skill`Shadow Noodles`, 2], [$skill`Shell Up`, () => {
   if (kolmafia.myClass() !== $class`Turtle Tamer`) return 0;
@@ -30082,21 +30090,21 @@ var FreeFightTasks = [freeFightTask({
 }), freeFightTask({
   name: "Machine Elf",
   adventure: $location`The Deep Machine Tunnels`,
-  ready: () => have$R($familiar`Machine Elf`) || dmtCommaValuable(),
+  ready: () => have$R($familiar`Machine Elf`) || dmtCommaValuable(MAX_SELF_DRIBBLING_BASKETBALL_PRICE, MAX_DMT_SNOWGLOBE_PRICE),
   completed: () => get$2("_machineTunnelsAdv") >= 5,
   do: $location`The Deep Machine Tunnels`,
   prepare: () => {
     if (kolmafia.myFamiliar() === $familiar`Comma Chameleon`) {
       if (currentFamiliar$1() !== $familiar`Machine Elf`) {
-        acquire(1, $item`self-dribbling basketball`, 10000);
+        acquire(1, $item`self-dribbling basketball`, MAX_SELF_DRIBBLING_BASKETBALL_PRICE);
         transform($familiar`Machine Elf`);
       }
       if (!kolmafia.canAdventure($location`The Deep Machine Tunnels`)) {
-        acquire(1, $item`Deep Machine Tunnels snowglobe`, 2000);
+        acquire(1, $item`Deep Machine Tunnels snowglobe`, MAX_DMT_SNOWGLOBE_PRICE);
         kolmafia.use($item`Deep Machine Tunnels snowglobe`);
       }
     }
-    // We need an else here because if we're using Comma we don't get to convert items.
+    // Both comma & machine elf are allowed to convert abstractions, so the below is shared between them.
     if (garboValue($item`abstraction: certainty`) >= garboValue($item`abstraction: thought`)) {
       acquire(1, $item`abstraction: thought`, garboValue($item`abstraction: certainty`), false);
     }
@@ -30539,6 +30547,16 @@ var SANDWORM_TASK_DEFINITIONS = [{
   combatCount: () => drumMachineROI() > kolmafia.mallPrice($item`shadow brick`) ? clamp(13 - get$2("_shadowBricksUsed"), 0, 13) : 0,
   acquire: () => [{
     item: $item`shadow brick`,
+    price: drumMachineROI()
+  }]
+}, {
+  name: $item`partial tombstone`.name,
+  ready: () => drumMachineROI() > kolmafia.mallPrice($item`partial tombstone`),
+  completed: () => get$2("_partialTombstonesUsed") >= 11,
+  combat: new GarboStrategy(() => sandwormMacro().tryItem($item`partial tombstone`)),
+  combatCount: () => drumMachineROI() > kolmafia.mallPrice($item`partial tombstone`) ? clamp(11 - get$2("_partialTombstonesUsed"), 0, 11) : 0,
+  acquire: () => [{
+    item: $item`partial tombstone`,
     price: drumMachineROI()
   }]
 }, {
@@ -35141,7 +35159,7 @@ function main() {
     }); // Automate Shadow Labyrinth Quest
 
     var equipmentFamiliars = $familiars`Left-Hand Man, Disembodied Hand, Mad Hatrack, Fancypants Scarecrow`;
-    var _iterator = _createForOfIteratorHelper(equipmentFamiliars.filter(have$R)),
+    var _iterator = _createForOfIteratorHelper(equipmentFamiliars.filter(familiar => have$R(familiar))),
       _step;
     try {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
