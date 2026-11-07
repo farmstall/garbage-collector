@@ -530,7 +530,7 @@ export function main(argString = ""): void {
       // 1. make an outfit (amulet coin, pantogram, etc), misc other stuff (VYKEA, songboom, robortender drinks)
       dailySetup();
 
-      const preventEquip = $items`broken champagne bottle, Spooky Putty snake, Spooky Putty mitre, Spooky Putty leotard, Spooky Putty ball, papier-mitre, papier-mâchéte, papier-mâchine gun, papier-masque, papier-mâchuridars, smoke ball, stinky fannypack, dice-shaped backpack, Amulet of Perpetual Darkness`;
+      const preventEquip = $items`broken champagne bottle, Spooky Putty snake, Spooky Putty mitre, Spooky Putty leotard, Spooky Putty ball, papier-mitre, papier-mâchéte, papier-mâchine gun, papier-masque, papier-mâchuridars, smoke ball, stinky fannypack, dice-shaped backpack, Amulet of Perpetual Darkness, fiberglass foil`;
       if (isQuickGear()) {
         // Brimstone equipment explodes the number of maximize combinations
         preventEquip.push(
@@ -564,6 +564,7 @@ export function main(argString = ""): void {
 
       if (!globalOptions.nobarf) {
         // 3. burn turns at barf
+        globalOptions.farmingStarted = true;
         potionSetup(false);
         maximize("MP", false);
         meatMood().execute(estimatedGarboTurns());
