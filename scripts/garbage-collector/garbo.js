@@ -17399,6 +17399,16 @@ var Outfit = /*#__PURE__*/function () {
         return value;
       }).length > 0) {
         var allRequirements = [new Requirement(this.modifier, {
+          forceEquip: _toConsumableArray(this.equips).filter(_ref7 => {
+            var _ref8 = _slicedToArray(_ref7, 2),
+              slot = _ref8[0],
+              item = _ref8[1];
+            return item !== $item.none && (slot !== $slot`familiar` || $slots`familiar, off-hand`.includes(kolmafia.toSlot(item)));
+          }).map(_ref9 => {
+            var _ref0 = _slicedToArray(_ref9, 2),
+              item = _ref0[1];
+            return item;
+          }),
           preventSlot: _toConsumableArray(usedSlots),
           preventEquip: this.avoid,
           modes: modes,
@@ -17589,9 +17599,9 @@ var Outfit = /*#__PURE__*/function () {
           result.modes = convertFromLibramModes(spec.maximizeOptions.modes);
         }
         // Not sure if this is necessary
-        var cleanedResult = Object.fromEntries(_toConsumableArray(Object.entries(result)).filter(_ref7 => {
-          var _ref8 = _slicedToArray(_ref7, 2),
-            v = _ref8[1];
+        var cleanedResult = Object.fromEntries(_toConsumableArray(Object.entries(result)).filter(_ref1 => {
+          var _ref10 = _slicedToArray(_ref1, 2),
+            v = _ref10[1];
           return v !== undefined;
         }));
         return Outfit.from(cleanedResult);
@@ -18311,6 +18321,7 @@ var FarmingMethod = /*#__PURE__*/function (FarmingMethod) {
   FarmingMethod["BARF_MOUNTAIN"] = "Barf Mountain";
   FarmingMethod["THE_CORAL_CORRAL"] = "The Coral Corral";
   FarmingMethod["THE_MARINARA_TRENCH"] = "The Marinara Trench";
+  FarmingMethod["MOB_PENGUIN_CAPO"] = "The Copperhead Club";
   return FarmingMethod;
 }({});
 var workshedAliases = [{
@@ -18349,6 +18360,10 @@ var farmingStrategyAliases = {
   [FarmingMethod.THE_MARINARA_TRENCH]: {
     location: $location`The Marinara Trench`,
     aliases: ["trench", "marinara", "inko", "squido", "ATTheSea"]
+  },
+  [FarmingMethod.MOB_PENGUIN_CAPO]: {
+    location: $location`The Copperhead Club`,
+    aliases: ["pingu", "copperhead", "fish head", "envelope"]
   }
 };
 function stringToFarmingMethod(s) {
@@ -20487,7 +20502,7 @@ function checkGithubVersion() {
       // Query GitHub for latest release commit
       var gitBranches = JSON.parse(gitData);
       var releaseSHA = (_gitBranches$find = gitBranches.find(branchInfo => branchInfo.name === "release")) === null || _gitBranches$find === void 0 || (_gitBranches$find = _gitBranches$find.commit) === null || _gitBranches$find === void 0 ? void 0 : _gitBranches$find.sha;
-      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"90c50c41c4b8512f13b13d08e1e261c19b45a4a2"})`);
+      kolmafia.print(`Local Version: ${localSHA} (built from ${"main"}@${"ccfab2f463d1917c83e08334a92d794fd412b307"})`);
       if (releaseSHA === localSHA) {
         kolmafia.print("Garbo is up to date!", HIGHLIGHT);
       } else if (releaseSHA === undefined) {
@@ -21702,6 +21717,49 @@ function checkBarfQuest() {
   return;
 }
 
+var banishMethods = [{
+  source: $skill`Spring Kick`,
+  available: () => have$R($item`spring shoes`),
+  macro: StrictMacro.trySkill($skill`Spring Kick`).trySkill($skill`Spring Away`),
+  equip: $item`spring shoes`
+}, {
+  source: $skill`Batter Up!`,
+  available: () => kolmafia.myClass() === $class`Seal Clubber` && have$R($skill`Batter Up!`) && kolmafia.myFury() >= 5,
+  macro: StrictMacro.trySkill($skill`Batter Up!`),
+  equip: $item`seal-clubbing club`
+}, {
+  source: $skill`Order a Kneecapping`,
+  available: () => have$R($skill`Order a Kneecapping`) && !get$2("_kneecappingOrdered"),
+  macro: StrictMacro.trySkill($skill`Order a Kneecapping`)
+}, {
+  source: $item`human musk`,
+  available: () => true,
+  macro: StrictMacro.tryItem($item`human musk`),
+  retrieve: true
+}, {
+  source: skills.ThrowALightningBolt,
+  available: () => lightningBoltsRemaining() > 0,
+  equip: $item`Monodent of the Sea`,
+  macro: StrictMacro.trySkill(skills.ThrowALightningBolt)
+}];
+function availableBanishes(banishMonsters) {
+  var banishedMonsters = getBanishedMonsters();
+  return banishMethods.filter(method => method.available() && !banishMonsters.includes(banishedMonsters.get(method.source) ?? $monster.none));
+}
+function haveEnoughBanishes(banishMonsters) {
+  return availableBanishes(banishMonsters).length >= banishMonsters.filter(monster => !kolmafia.isBanished(monster)).length;
+}
+function chooseBanish(banishMonsters, targetMonster) {
+  if (banishMonsters.every(monster => kolmafia.isBanished(monster))) return null;
+  var available = availableBanishes(banishMonsters);
+  var banishedMonsters = getBanishedMonsters();
+
+  // If a preceding script banished our target, reuse that banish first.
+  return available.find(method => banishedMonsters.get(method.source) === targetMonster) ??
+  // Otherwise use FIFO.
+  available[0] ?? null;
+}
+
 function averageRedTaffyValue() {
   return sum(_toConsumableArray(RED_TAFFY_DROP_WEIGHTS.entries()), _ref => {
     var _ref2 = _slicedToArray(_ref, 2),
@@ -21750,6 +21808,11 @@ var FarmingStrategySkeleton = /*#__PURE__*/function () {
     _classCallCheck(this, FarmingStrategySkeleton);
   }
   return _createClass(FarmingStrategySkeleton, [{
+    key: "isAvailable",
+    value: function isAvailable() {
+      return undelay(this.available) && haveEnoughBanishes(this.banishMonsters);
+    }
+  }, {
     key: "isUnderwater",
     value: function isUnderwater() {
       return this.location.environment === "underwater";
@@ -21855,7 +21918,7 @@ var BARF_MOUNTAIN = {
   combat: () => Macro.meatKill(),
   post: completeBarfQuest
 };
-var underwaterOutfit = _ref5 => {
+var banishOutfit = _ref5 => {
   var banish = _ref5.banish;
   return banish !== null && banish !== void 0 && banish.equip ? {
     equip: [banish.equip]
@@ -21871,7 +21934,7 @@ var THE_CORAL_CORRAL = {
   targetMonster: $monster`sea cow`,
   shouldOlfact: false,
   available: kolmafia.effectFact($monster`sea cow`) === $effect`Fishy` && (!get$2("seahorseName") || get$2("lassoTrainingCount") >= 20),
-  outfit: underwaterOutfit,
+  outfit: banishOutfit,
   combat: _ref6 => {
     var banish = _ref6.banish;
     return Macro.externalIf(!get$2("seahorseName"), Macro.if_($monster`wild seahorse`, Macro.item($item`sea cowbell`).item($item`sea cowbell`).item($item`sea cowbell`).item($item`sea lasso`).abortWithMsg("Wild seahorse should have been tamed, what happened?"))).farmingBanish(banish).externalIf(kolmafia.myBuffedstat($stat`Moxie`) < $monster`sea cow`.baseAttack + 10 || have$R($skill`Hero of the Half-Shell`) && kolmafia.itemType(kolmafia.equippedItem($slot`offhand`)) === "shield" && kolmafia.myBuffedstat($stat`Muscle`) < $monster`sea cow`.baseAttack + 10, Macro.delevel()).externalIf(redTaffyWorth(), Macro.tryItem($item`pulled red taffy`)).meatKill();
@@ -21887,10 +21950,26 @@ var THE_MARINARA_TRENCH = {
   targetMonster: $monster`giant squid`,
   shouldOlfact: false,
   available: kolmafia.effectFact($monster`giant squid`) === $effect`Fishy`,
-  outfit: underwaterOutfit,
+  outfit: banishOutfit,
   combat: _ref7 => {
     var banish = _ref7.banish;
     return Macro.farmingBanish(banish).externalIf(kolmafia.myBuffedstat($stat`Moxie`) < $monster`giant squid`.baseAttack + 10 || have$R($skill`Hero of the Half-Shell`) && kolmafia.itemType(kolmafia.equippedItem($slot`offhand`)) === "shield" && kolmafia.myBuffedstat($stat`Muscle`) < $monster`giant squid`.baseAttack + 10, Macro.delevel()).externalIf(redTaffyWorth(), Macro.tryItem($item`pulled red taffy`)).meatKill();
+  }
+};
+var MOB_PENGUIN_CAPO = {
+  stasisRounds: 20,
+  asdonEffect: $effect`Driving Observantly`,
+  ensureBarfAccess: false,
+  meatDrop: 200,
+  location: $location`The Copperhead Club`,
+  banishMonsters: $monsters`Copperhead Club bartender, fan dancer, ninja dressed as a waiter, waiter dressed as a ninja`,
+  targetMonster: $monster`Mob Penguin Capo`,
+  shouldOlfact: false,
+  available: kolmafia.canAdventure($location`The Copperhead Club`),
+  outfit: banishOutfit,
+  combat: _ref8 => {
+    var banish = _ref8.banish;
+    return Macro.farmingBanish(banish).meatKill();
   }
 };
 var cachedStrategy;
@@ -21906,6 +21985,9 @@ function currentStrategy() {
         break;
       case FarmingMethod.THE_MARINARA_TRENCH:
         strategyOptions = THE_MARINARA_TRENCH;
+        break;
+      case FarmingMethod.MOB_PENGUIN_CAPO:
+        strategyOptions = MOB_PENGUIN_CAPO;
         break;
       case FarmingMethod.BARF_MOUNTAIN:
       default:
@@ -24323,25 +24405,25 @@ function menu$1(adventure) {
         worksOnFreeRun: true
       });
     }
-    if (snapperReasonable(mode)) {
-      familiarMenu.push({
-        familiar: $familiar`Red-Nosed Snapper`,
-        expectedValue: snapperValue(mode),
-        leprechaunMultiplier: 0,
-        limit: "none",
-        worksOnFreeRun: false
-      });
-    }
-    if (mode === "barf" && have$R($familiar`Sword of S Words`) && get$2("swordOfSWordsMonster") && get$2("_swordOfSWordsKills") < 100) {
-      familiarMenu.push({
-        familiar: $familiar`Sword of S Words`,
-        expectedValue: 0,
-        // handled in barf cache
-        leprechaunMultiplier: 0,
-        limit: "special",
-        worksOnFreeRun: false
-      });
-    }
+  }
+  if (snapperReasonable(mode)) {
+    familiarMenu.push({
+      familiar: $familiar`Red-Nosed Snapper`,
+      expectedValue: snapperValue(mode),
+      leprechaunMultiplier: 0,
+      limit: "none",
+      worksOnFreeRun: false
+    });
+  }
+  if (mode === "barf" && have$R($familiar`Sword of S Words`) && get$2("swordOfSWordsMonster") && get$2("_swordOfSWordsKills") < 100) {
+    familiarMenu.push({
+      familiar: $familiar`Sword of S Words`,
+      expectedValue: 0,
+      // handled in barf cache
+      leprechaunMultiplier: 0,
+      limit: "special",
+      worksOnFreeRun: false
+    });
   }
   if (have$a()) {
     familiarMenu.push({
@@ -28228,45 +28310,6 @@ function checkPrefWatchReports() {
   }
 }
 
-var banishMethods = [{
-  source: $skill`Spring Kick`,
-  available: () => have$R($item`spring shoes`),
-  macro: Macro.trySkill($skill`Spring Kick`).trySkill($skill`Spring Away`),
-  equip: $item`spring shoes`
-}, {
-  source: $skill`Batter Up!`,
-  available: () => kolmafia.myClass() === $class`Seal Clubber` && have$R($skill`Batter Up!`) && kolmafia.myFury() >= 5,
-  macro: Macro.trySkill($skill`Batter Up!`),
-  equip: $item`seal-clubbing club`
-}, {
-  source: $skill`Order a Kneecapping`,
-  available: () => have$R($skill`Order a Kneecapping`) && !get$2("_kneecappingOrdered"),
-  macro: Macro.trySkill($skill`Order a Kneecapping`)
-}, {
-  source: $item`human musk`,
-  available: () => true,
-  macro: Macro.tryItem($item`human musk`),
-  retrieve: true
-}, {
-  source: skills.ThrowALightningBolt,
-  available: () => lightningBoltsRemaining() > 0,
-  equip: $item`Monodent of the Sea`,
-  macro: Macro.trySkill(skills.ThrowALightningBolt)
-}];
-var banishAvailable = method => method.available() && !FarmingStrategy.banishMonsters.includes(getBanishedMonsters().get(method.source) ?? $monster.none);
-function chooseBanish() {
-  if (FarmingStrategy.monstersToBanish().length === 0) {
-    return null;
-  }
-  var banishedMonsters = getBanishedMonsters();
-  var targetMonster = FarmingStrategy.primaryMonster();
-
-  // If a preceding script banished our target, reuse that banish first.
-  return banishMethods.find(method => banishAvailable(method) && banishedMonsters.get(method.source) === targetMonster) ??
-  // Otherwise use FIFO.
-  banishMethods.find(banishAvailable) ?? null;
-}
-
 function logTargetFight(encounterType) {
   var isDigitize = encounterType.includes("Digitize Wanderer");
   if (isDigitize) {
@@ -28529,7 +28572,7 @@ var FarmTurnEngine = /*#__PURE__*/function (_BaseGarboContextEngi2) {
     key: "getNextTask",
     value: function getNextTask() {
       _classPrivateFieldGet2(_contexts, this).clear();
-      _classPrivateFieldSet2(_banish, this, chooseBanish());
+      _classPrivateFieldSet2(_banish, this, chooseBanish(FarmingStrategy.banishMonsters, FarmingStrategy.primaryMonster()));
       return _superPropGet(FarmTurnEngine, "getNextTask", this, 3)([]);
     }
   }, {
@@ -28839,6 +28882,109 @@ function bestMidnightAvailable() {
     var value = _ref2.value;
     return value();
   });
+}
+
+// These are only for day 1 swapping after doing black rose (or any other similar garden)
+var harvestableGardens = [{
+  seedPacket: $item`packet of rock seeds`,
+  harvestables: [[$item`groveling gravel`, 1], [$item`milestone`, 1], [$item`whet stone`, 1]]
+}, {
+  seedPacket: $item`packet of pumpkin seeds`,
+  harvestables: [[$item`pumpkin`, 1]]
+}, {
+  seedPacket: $item`Peppermint Pip Packet`,
+  harvestables: [[$item`peppermint sprout`, 3]]
+}, {
+  seedPacket: $item`packet of dragon's teeth`,
+  harvestables: [[$item`skeleton`, 5]]
+}, {
+  seedPacket: $item`packet of beer seeds`,
+  harvestables: [[$item`handful of barley`, 3], [$item`cluster of hops`, 3]]
+}, {
+  seedPacket: $item`packet of winter seeds`,
+  harvestables: [[$item`snow berries`, 3], [$item`ice harvest`, 3]]
+}, {
+  seedPacket: $item`packet of thanksgarden seeds`,
+  harvestables: [[$item`cornucopia`, 1]]
+}];
+function currentGarden() {
+  return Object.values(GARDEN_ITEMS).find(garden => haveInCampground(garden));
+}
+
+// Capture this before any tasks run: temporarily planting roses must not lock us in.
+var startingGarden = currentGarden();
+function canSwapGarden() {
+  if (get$2("_blackRoseGardenToday")) return true;
+  if (globalOptions.ascend) return true;
+  if (swappedToday()) return true;
+  return startingGarden !== $item`black garden rose`;
+}
+var cachedBlackRoseGardenMonsters = null;
+function blackRoseGardenMonsters() {
+  if (cachedBlackRoseGardenMonsters === null) {
+    throw new Error("Black Rose Garden monsters have not been loaded.");
+  }
+  return cachedBlackRoseGardenMonsters;
+}
+function refreshBlackRoseGardenMonsters() {
+  if (get$2("_garbo_blackRoseFightsDone", false) || !(installed() || canSwapGarden() && have$6())) {
+    cachedBlackRoseGardenMonsters = [];
+    return;
+  }
+  var previousGarden = currentGarden();
+  if (!installed() && !kolmafia.use($item`black garden rose`)) {
+    throw new Error("Failed to plant the Black Rose Garden.");
+  }
+  try {
+    cachedBlackRoseGardenMonsters = availableMonsters$1();
+  } finally {
+    if (previousGarden && previousGarden !== $item`black garden rose`) {
+      kolmafia.use(previousGarden);
+    }
+  }
+}
+function harvestGarden() {
+  if (currentGarden() === $item`packet of rock seeds`) {
+    kolmafia.visitUrl("campground.php?action=rgarden1&pwd");
+    kolmafia.visitUrl("campground.php?action=rgarden2&pwd");
+    kolmafia.visitUrl("campground.php?action=rgarden3&pwd");
+  } else {
+    kolmafia.visitUrl("campground.php?action=garden&pwd");
+  }
+}
+function setupGarden() {
+  if (!canSwapGarden()) return;
+  if (startingGarden && !$items`packet of tall grass seeds, packet of mushroom spores`.includes(startingGarden) && kolmafia.getCampground()[startingGarden.name] && $items`packet of tall grass seeds, packet of mushroom spores`.some(gardenSeed => have$R(gardenSeed))) {
+    harvestGarden();
+  }
+  if (have$R($item`packet of tall grass seeds`) && kolmafia.myGardenType() !== "grass" && kolmafia.myGardenType() !== "mushroom") {
+    kolmafia.use($item`packet of tall grass seeds`);
+  }
+}
+function blackRoseWillGrow() {
+  return kolmafia.myGardenType() === "black_rose" && !swappedToday() && !globalOptions.ascend;
+}
+function restoreGarden() {
+  if (canSwapGarden() && startingGarden && have$R(startingGarden) && !blackRoseWillGrow()) {
+    kolmafia.use(startingGarden);
+  }
+}
+var cachedbestHarvestSwap = null;
+function bestHarvestSwap() {
+  if (cachedbestHarvestSwap === null) {
+    var ownedGardens = harvestableGardens.filter(garden => have$R(garden.seedPacket));
+    if (ownedGardens.length <= 0) {
+      cachedbestHarvestSwap = kolmafia.Item.none;
+    } else {
+      cachedbestHarvestSwap = maxBy(ownedGardens, garden => sum(garden.harvestables, _ref => {
+        var _ref2 = _slicedToArray(_ref, 2),
+          item = _ref2[0],
+          quantity = _ref2[1];
+        return quantity * garboValue(item);
+      })).seedPacket;
+    }
+  }
+  return cachedbestHarvestSwap;
 }
 
 function desirableIngredients() {
@@ -29597,85 +29743,6 @@ function ghostAdventure() {
     location: get$2("ghostLocation") ?? $location.none,
     target: getGhost() ?? $monster.none
   };
-}
-
-// These are only for day 1 swapping after doing black rose (or any other similar garden)
-var harvestableGardens = [{
-  seedPacket: $item`packet of rock seeds`,
-  harvestables: [[$item`groveling gravel`, 1], [$item`milestone`, 1], [$item`whet stone`, 1]]
-}, {
-  seedPacket: $item`packet of pumpkin seeds`,
-  harvestables: [[$item`pumpkin`, 1]]
-}, {
-  seedPacket: $item`Peppermint Pip Packet`,
-  harvestables: [[$item`peppermint sprout`, 3]]
-}, {
-  seedPacket: $item`packet of dragon's teeth`,
-  harvestables: [[$item`skeleton`, 5]]
-}, {
-  seedPacket: $item`packet of beer seeds`,
-  harvestables: [[$item`handful of barley`, 3], [$item`cluster of hops`, 3]]
-}, {
-  seedPacket: $item`packet of winter seeds`,
-  harvestables: [[$item`snow berries`, 3], [$item`ice harvest`, 3]]
-}, {
-  seedPacket: $item`packet of thanksgarden seeds`,
-  harvestables: [[$item`cornucopia`, 1]]
-}];
-function currentGarden() {
-  return Object.values(GARDEN_ITEMS).find(garden => haveInCampground(garden));
-}
-
-// Capture this before any tasks run: temporarily planting roses must not lock us in.
-var startingGarden = currentGarden();
-function canSwapGarden() {
-  if (get$2("_blackRoseGardenToday")) return true;
-  if (globalOptions.ascend) return true;
-  if (swappedToday()) return true;
-  return startingGarden !== $item`black garden rose`;
-}
-function harvestGarden() {
-  if (currentGarden() === $item`packet of rock seeds`) {
-    kolmafia.visitUrl("campground.php?action=rgarden1&pwd");
-    kolmafia.visitUrl("campground.php?action=rgarden2&pwd");
-    kolmafia.visitUrl("campground.php?action=rgarden3&pwd");
-  } else {
-    kolmafia.visitUrl("campground.php?action=garden&pwd");
-  }
-}
-function setupGarden() {
-  if (!canSwapGarden()) return;
-  if (startingGarden && !$items`packet of tall grass seeds, packet of mushroom spores`.includes(startingGarden) && kolmafia.getCampground()[startingGarden.name] && $items`packet of tall grass seeds, packet of mushroom spores`.some(gardenSeed => have$R(gardenSeed))) {
-    harvestGarden();
-  }
-  if (have$R($item`packet of tall grass seeds`) && kolmafia.myGardenType() !== "grass" && kolmafia.myGardenType() !== "mushroom") {
-    kolmafia.use($item`packet of tall grass seeds`);
-  }
-}
-function blackRoseWillGrow() {
-  return kolmafia.myGardenType() === "black_rose" && !swappedToday() && !globalOptions.ascend;
-}
-function restoreGarden() {
-  if (canSwapGarden() && startingGarden && have$R(startingGarden) && !blackRoseWillGrow()) {
-    kolmafia.use(startingGarden);
-  }
-}
-var cachedbestHarvestSwap = null;
-function bestHarvestSwap() {
-  if (cachedbestHarvestSwap === null) {
-    var ownedGardens = harvestableGardens.filter(garden => have$R(garden.seedPacket));
-    if (ownedGardens.length <= 0) {
-      cachedbestHarvestSwap = kolmafia.Item.none;
-    } else {
-      cachedbestHarvestSwap = maxBy(ownedGardens, garden => sum(garden.harvestables, _ref => {
-        var _ref2 = _slicedToArray(_ref, 2),
-          item = _ref2[0],
-          quantity = _ref2[1];
-        return quantity * garboValue(item);
-      })).seedPacket;
-    }
-  }
-  return cachedbestHarvestSwap;
 }
 
 var DEFAULT_FREE_FIGHT_TASK = {
@@ -30876,6 +30943,7 @@ freeFightTask({
   },
   do: () => {
     fightMonster(nextBlackGardenRoseFight());
+    refreshBlackRoseGardenMonsters();
     if (nextBlackGardenRoseFight() === kolmafia.Monster.none) {
       _set("_garbo_blackRoseFightsDone", true);
     }
@@ -30885,11 +30953,11 @@ freeFightTask({
       kolmafia.use($item`packet of tall grass seeds`);
     }
   },
+  combatCount: () => blackRoseGardenMonsters().length,
   tentacle: false
 })]);
 function nextBlackGardenRoseFight() {
-  var monsters = availableMonsters$1();
-  return monsters[0] ?? kolmafia.Monster.none;
+  return blackRoseGardenMonsters()[0] ?? kolmafia.Monster.none;
 }
 function possibleFreeFightQuestTentacleFights() {
   var availableFights = FreeFightTasks.filter(task => "combatCount" in task && "tentacle" in task).filter(task => {
@@ -31906,6 +31974,7 @@ function freeFights() {
   }
   freeRunFights();
   killRobortCreaturesForFree();
+  refreshBlackRoseGardenMonsters();
   runGarboFreeFightQuests([PostQuest(), freeFightQuest(), FreeGiantSandwormQuest, mappingRecoveryQuest()]);
 
   // Run any community endeavors
@@ -35544,7 +35613,7 @@ function main() {
     Args.showHelp(globalOptions);
     return;
   }
-  if (!FarmingStrategy.available) {
+  if (!FarmingStrategy.isAvailable()) {
     throw new Error(`Farming strategy not available: ${globalOptions.prefs.farmingMethod}`);
   }
   if (globalOptions.debug) {
@@ -35719,6 +35788,10 @@ function main() {
       propertyManager.set({
         shadowLabyrinthGoal: "effects"
       }); // Automate Shadow Labyrinth Quest
+
+      propertyManager.setChoices({
+        855: 4
+      }); // Mallprice of 5-6 items always exceeds 500 meat
 
       var equipmentFamiliars = $familiars`Left-Hand Man, Disembodied Hand, Mad Hatrack, Fancypants Scarecrow`;
       var _iterator = _createForOfIteratorHelper(equipmentFamiliars.filter(familiar => have$R(familiar))),
