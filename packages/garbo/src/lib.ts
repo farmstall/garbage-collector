@@ -1,5 +1,6 @@
 import {
   canAdventure,
+  canEquip,
   cliExecute,
   Effect,
   effectModifier,
@@ -968,7 +969,11 @@ export function improvesAStat(thing: Item | Effect): boolean {
 }
 
 export function willDrunkAdventure() {
-  return have($item`Drunkula's wineglass`) && globalOptions.ascend;
+  return (
+    have($item`Drunkula's wineglass`) &&
+    canEquip($item`Drunkula's wineglass`) &&
+    (globalOptions.ascend || !sober())
+  );
 }
 
 export function freeFishyAvailable(): boolean {
@@ -1002,6 +1007,10 @@ export function marginalFamWeightValue(): number {
 export function mainStatLevel(level: number): number {
   return (level - 1) ** 2 + 4;
 }
+
+export type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never;
 
 export type RequireAtLeastOne<T, K = keyof T> = K extends keyof T
   ? Partial<T> & { [k in K]: T[K] }
